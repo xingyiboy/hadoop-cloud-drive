@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", // 目标语言的版本
+    "module": "ESNext", // 生成代码的模板标准
+    "lib": ["DOM", "DOM.Iterable", "ESNext"], // ts 需要引用的库
+    "moduleResolution": "Node", // 模块解析策略
+    "esModuleInterop": false, // 是否允许 export 导出
+    "jsx": "react-jsx", // 指定 jsx 格式
+    "useDefineForClassFields": true,
+    "allowJs": true, // 允许编译器编译 js jsx 文件
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true, // 开启所有严格的类型检查
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true, // 不输出文件，即编译后不会产生任何js文件
+    "noImplicitAny": true, // 允许 any 类型
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

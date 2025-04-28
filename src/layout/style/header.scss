@@ -1,0 +1,15 @@
+.header{
+  height: 68px;
+  background-color: #6051ef;
+  color: #fff;
+  padding: 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  .logo{
+    font-size: 20px;
+  }
+  .head-dropdown{
+    color: #fff;
+  }
+}
