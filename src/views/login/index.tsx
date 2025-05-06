@@ -1,8 +1,8 @@
 /*
  * @Date: 2025-04-28 14:48:50
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-04-28 17:37:57
- * @FilePath: \react-admin-main\src\views\login\index.tsx
+ * @LastEditTime: 2025-04-29 10:17:53
+ * @FilePath: \CloudDiskWeb\src\views\login\index.tsx
  */
 import "./index.scss";
 
@@ -110,7 +110,7 @@ function Login() {
               </Form.Item>
               <div className="bottom">
                 <a></a>
-                <a>立即注册</a>
+                <a onClick={() => navigate("/register")}>立即注册</a>
                 <a>忘记密码?</a>
               </div>
             </Form>

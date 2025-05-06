@@ -1,0 +1,112 @@
+.register-page {
+  height: 100%;
+  .header {
+    border-bottom: #000 solid 1px;
+    margin-bottom: 5%;
+    height: 5rem;
+    display: flex;
+    justify-content: space-between;
+    .left {
+      margin-left: 15%;
+      display: flex;
+      .logo {
+        margin: auto 0;
+        font-size: 2rem;
+        color: #007cc8;
+      }
+      .name {
+        margin: auto 5px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #449dd6;
+      }
+      .shu {
+        margin: auto 5px;
+        font-size: 1.2rem;
+      }
+      .title {
+        margin: auto 0;
+        font-size: 1.2rem;
+        color: #000;
+      }
+    }
+    .right {
+      margin-right: 2rem;
+      display: flex;
+      margin: 20px;
+      .link {
+        margin-top: 1px;
+        color: #000;
+        margin-right: 20px;
+      }
+      .login {
+        cursor: pointer;
+        color: #82b2fa;
+        border: #cfe1fd solid 0.2px;
+        border-radius: 15%;
+        text-align: center;
+        width: 50px;
+        height: 27px;
+        background-color: #f3f8ff;
+      }
+    }
+  }
+}
+
+.form {
+  display: flex;
+  justify-content: space-between;
+  .left {
+    width: 30%;
+    height: 40%;
+    margin-left: 20%;
+    .link {
+      display: flex;
+    }
+  }
+  .right {
+    background-color: #f5fbff;
+    width: 20%;
+    height: 40%;
+    margin-right: 10%;
+    padding: 1%;
+    .title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .content {
+      font-weight: bold;
+    }
+    .hint {
+      color: #ffa54d;
+    }
+    .interleave {
+      margin-bottom: 6%;
+    }
+  }
+}
+
+.footer {
+  margin-top: 10%;
+  height: 15rpx;
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+  .center {
+    width: 10rpx;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #efefef;
+    .icon-footer {
+      margin: 8px 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      background-color: #efefef;
+      display: flex;
+      .name {
+        width: 70px;
+      }
+    }
+  }
+}
