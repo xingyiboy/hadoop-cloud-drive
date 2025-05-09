@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-04-28 14:48:50
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-06 11:07:44
+ * @LastEditTime: 2025-05-08 14:33:54
  * @FilePath: \CloudDiskWeb\src\views\register\index.tsx
  */
 import "./index.scss";
@@ -164,7 +164,7 @@ function Register() {
           </div>
         </div>
       </div>
-      <div className="footer">
+      <div className="footer2">
         <div className="center">
           {iconFooterUrl.map((item, index) => {
             return <IconFooter key={index} url={item.url} name={item.name} />;
