@@ -1,11 +1,26 @@
-
-.header{
-    background-color: #fff;
-    .logo{
-        color: blue;
-        
+.header {
+  background-color: #fff;
+  display: flex;
+  justify-content: space-between;
+  .left {
+    display: flex;
+    .logo {
+      color: blue;
+      font-size: 2em;
+      margin-right: 0.2em;
     }
-    .logo-title{
-        font-size: 1.3em;
+    .logo-title {
+      font-weight: bold;
+      font-size: 1.3em;
+      margin-right: 2em;
     }
+    .menu {
+      color: #602992;
+    }
+  }
+  .right {
+    display: flex;
+    align-items: center;
+    font-size: 1em;
+  }
 }
