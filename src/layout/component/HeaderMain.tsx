@@ -67,7 +67,7 @@ function HeaderMain() {
           <div>当前目录:</div>
           <div>|</div>
           <div>客户端下载</div>
-          <Button shape="round" type="danger" variant="solid">
+          <Button shape="round" danger type="primary">
             会员中心
           </Button>
         </Space>
