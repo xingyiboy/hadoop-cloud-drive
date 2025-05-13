@@ -12,7 +12,6 @@
 
 ```javascript
 - npm install -g pnpm
-- yarn add -g pnpm
 ```
 
 ### 安装依赖

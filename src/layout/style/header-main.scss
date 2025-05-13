@@ -1,8 +1,9 @@
 .header {
-  background-color: #fff;
+  background-color: #eff4f8 !important;
   display: flex;
   justify-content: space-between;
   .left {
+    background: #eff4f8 !important;
     display: flex;
     .logo {
       color: blue;
@@ -15,10 +16,26 @@
       margin-right: 2em;
     }
     .menu {
+      background: #eff4f8 !important;
       color: #602992;
+
+      // 修改菜单项的背景色
+      .ant-menu-item {
+        background: #eff4f8 !important;
+        &:hover {
+          background: #e6ebef !important;
+        }
+      }
+
+      // 修改菜单组件本身的背景色和边框
+      &.ant-menu {
+        background: #eff4f8 !important;
+        border-bottom: none !important;
+      }
     }
   }
   .right {
+    background: #eff4f8 !important;
     display: flex;
     align-items: center;
     font-size: 1em;

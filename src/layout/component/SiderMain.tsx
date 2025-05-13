@@ -6,13 +6,10 @@
  */
 const { Sider } = Layout;
 import { Layout, Menu } from "antd";
-import {
-  ShareAltOutlined,
-  RestOutlined
-} from "@ant-design/icons";
+import { ShareAltOutlined, RestOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
-
 import React from "react";
+import "../style/sider-main.scss";
 
 const items2: MenuProps["items"] = [
   { key: "1", icon: "", label: "全部文件" },
@@ -23,7 +20,7 @@ const items2: MenuProps["items"] = [
   { key: "6", icon: "", label: "种子" },
   { key: "7", icon: "", label: "更多" },
   { key: "8", icon: React.createElement(ShareAltOutlined), label: "我的分享" },
-  { key: "9", icon: React.createElement(RestOutlined ), label: "回收站" },
+  { key: "9", icon: React.createElement(RestOutlined), label: "回收站" },
 ];
 
 console.log(items2);

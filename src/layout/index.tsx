@@ -1,26 +1,19 @@
-import { Breadcrumb, Layout } from "antd";
-
-const { Header, Content, Sider } = Layout;
+import { Layout } from "antd";
 import HeaderMain from "./component/HeaderMain";
 import SiderMain from "./component/SiderMain";
 import ContentMain from "./component/ContentMain";
+import "./style/layout.scss";
 
-function Main() {
+function LayoutIndex() {
   return (
-    <Layout style={{ height: "100%", borderRight: 0 }}>
+    <Layout style={{ minHeight: "100vh" }}>
       <HeaderMain />
       <Layout>
         <SiderMain />
-        <Layout style={{ padding: "0 24px 24px" }}>
-          <Breadcrumb
-            items={[{ title: "Home" }, { title: "List" }, { title: "App" }]}
-            style={{ margin: "16px 0" }}
-          />
-          <ContentMain />
-        </Layout>
+        <ContentMain />
       </Layout>
     </Layout>
   );
 }
 
-export default Main;
+export default LayoutIndex;
