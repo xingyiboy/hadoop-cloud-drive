@@ -6,23 +6,94 @@
  */
 import "./index.scss";
 
-import { Form, Input, Button, Checkbox, Avatar, Space } from "antd";
+import { Form, Input, Button, Checkbox, Avatar, Space, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
 import { useAppDispatch } from "@/store/hooks";
-import { login } from "@/store/modules/user";
+import { login as loginAction } from "@/store/modules/user";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { login } from "@/api";
+import { setToken } from "@/utils/setToken";
+import { useEffect } from "react";
+
+// 保存账号密码到localStorage
+const saveCredentials = (username: string, password: string) => {
+  localStorage.setItem(
+    "savedCredentials",
+    JSON.stringify({ username, password })
+  );
+};
+
+// 清除保存的账号密码
+const clearCredentials = () => {
+  localStorage.removeItem("savedCredentials");
+};
+
+// 获取保存的账号密码
+const getSavedCredentials = () => {
+  const saved = localStorage.getItem("savedCredentials");
+  return saved ? JSON.parse(saved) : null;
+};
 
 function Login() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const onFinish = (value: User.loginInfo) => {
-    dispatch(login(value.userName));
-    navigate("/", { replace: true });
-  };
-  //表单
+  const location = useLocation();
   const [form] = Form.useForm();
+
+  // 页面加载时，尝试填充保存的账号密码
+  useEffect(() => {
+    const savedCredentials = getSavedCredentials();
+    if (savedCredentials) {
+      form.setFieldsValue({
+        userName: savedCredentials.username,
+        password: savedCredentials.password,
+        remember: true,
+      });
+    }
+  }, []);
+
+  // 如果有注册页面传来的账号密码，自动填写
+  useEffect(() => {
+    const state = location.state as {
+      username?: string;
+      password?: string;
+    } | null;
+    if (state?.username && state?.password) {
+      form.setFieldsValue({
+        userName: state.username,
+        password: state.password,
+      });
+      // 清除state，防止刷新页面时重复填写
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state]);
+
+  const onFinish = async (values: any) => {
+    try {
+      const response = await login({
+        username: values.userName,
+        password: values.password,
+      });
+
+      // 如果勾选了记住密码，保存账号密码
+      if (values.remember) {
+        saveCredentials(values.userName, values.password);
+      } else {
+        clearCredentials();
+      }
+
+      // 保存token
+      setToken(response.data.accessToken);
+      // 更新用户状态
+      dispatch(loginAction(values.userName));
+      message.success("登录成功");
+      navigate("/", { replace: true });
+    } catch (error: any) {
+      message.error(error || "登录失败");
+    }
+  };
   //图标
   const IconBottem = ({ url }: { url: string }) => {
     return <Avatar size={26} src={<img src={url} alt="avatar" />} />;
@@ -87,13 +158,9 @@ function Login() {
                 name="password"
                 rules={[{ required: true, message: "登录密码不能为空" }]}
               >
-                <Input
-                  prefix={<LockOutlined />}
-                  type="password"
-                  placeholder="密码"
-                />
+                <Input.Password prefix={<LockOutlined />} placeholder="密码" />
               </Form.Item>
-              <Form.Item name="disabled" valuePropName="checked">
+              <Form.Item name="remember" valuePropName="checked">
                 <Checkbox>记住密码</Checkbox>
               </Form.Item>
               <Form.Item>

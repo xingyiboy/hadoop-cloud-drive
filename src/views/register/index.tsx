@@ -6,21 +6,47 @@
  */
 import "./index.scss";
 
-import { Form, Input, Button, Checkbox, Avatar, Space } from "antd";
+import { Form, Input, Button, Checkbox, Avatar, Space, message } from "antd";
 import { UserOutlined, LockOutlined, MailOutlined } from "@ant-design/icons";
 
 import { useAppDispatch } from "@/store/hooks";
 import { login } from "@/store/modules/user";
 
 import { useNavigate } from "react-router-dom";
+import { register } from "@/api";
 
 function Register() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const onFinish = (value: User.loginInfo) => {
-    dispatch(login(value.userName));
-    navigate("/login", { replace: false });
+
+  const onFinish = async (values: any) => {
+    try {
+      // 验证两次密码是否一致
+      if (values.password !== values.confirmPassword) {
+        message.error("两次输入的密码不一致");
+        return;
+      }
+
+      await register({
+        username: values.username,
+        nickname: values.nickname,
+        password: values.password,
+      });
+
+      message.success("注册成功");
+      // 跳转到登录页面并传递账号密码参数
+      navigate("/login", {
+        replace: true,
+        state: {
+          username: values.username,
+          password: values.password,
+        },
+      });
+    } catch (error: any) {
+      message.error(error || "注册失败");
+    }
   };
+
   //表单
   const [form] = Form.useForm();
 
@@ -73,58 +99,57 @@ function Register() {
           <div className="form-wrap">
             <Form form={form} size="large" onFinish={onFinish}>
               <Form.Item
-                label="用户名"
-                className="form-item"
-                name="userName"
-                rules={[{ required: true, message: "登录账号不能为空" }]}
-              >
-                <Input placeholder="请输入用户名" />
-              </Form.Item>
-              {/* 手机号 */}
-              <Form.Item
-                label="手机号"
-                className="form-item"
-                name="phone"
+                label="用户账号"
+                name="username"
                 rules={[
-                  { required: true, message: "手机号不能为空" },
-                  { pattern: /^[0-9]{11}$/, message: "请输入11位数字的手机号" },
+                  { required: true, message: "用户账号不能为空" },
+                  {
+                    pattern: /^[a-zA-Z0-9]{4,30}$/,
+                    message: "用户账号由 数字、字母 组成",
+                  },
+                  { min: 4, max: 30, message: "用户账号长度为 4-30 个字符" },
                 ]}
               >
-                <Input placeholder="请输入手机号" maxLength={11} />
+                <Input placeholder="请输入用户账号" />
               </Form.Item>
-              {/* 邮箱 */}
               <Form.Item
-                label="邮箱"
-                className="form-item"
-                name="email"
+                label="用户昵称"
+                name="nickname"
                 rules={[
-                  { required: true, message: "邮箱不能为空" },
-                  { type: "email", message: "请输入正确的邮箱格式" },
+                  { required: true, message: "用户昵称不能为空" },
+                  { max: 30, message: "用户昵称长度不能超过 30 个字符" },
                 ]}
               >
-                <Input placeholder="请输入邮箱" />
+                <Input placeholder="请输入用户昵称" />
               </Form.Item>
               <Form.Item
                 label="密码"
-                className="form-item"
                 name="password"
-                rules={[{ required: true, message: "登录密码不能为空" }]}
+                rules={[
+                  { required: true, message: "密码不能为空" },
+                  { min: 4, max: 16, message: "密码长度为 4-16 位" },
+                ]}
               >
-                <Input type="password" placeholder="请输入密码" />
+                <Input.Password placeholder="请输入密码" />
               </Form.Item>
-              {/* 确认密码 */}
               <Form.Item
                 label="确认密码"
-                className="form-item"
                 name="confirmPassword"
-                rules={[{ required: true, message: "确认密码不能为空" }]}
+                rules={[
+                  { required: true, message: "确认密码不能为空" },
+                  { min: 4, max: 16, message: "密码长度为 4-16 位" },
+                ]}
               >
-                <Input type="password" placeholder="请再次输入密码进行确认" />
+                <Input.Password placeholder="请再次输入密码进行确认" />
               </Form.Item>
-              <Form.Item name="disabled" valuePropName="checked">
+              <Form.Item
+                name="agreement"
+                valuePropName="checked"
+                rules={[{ required: true, message: "请阅读并同意用户协议" }]}
+              >
                 <Checkbox>
                   <div className="link">
-                    <div>接收并阅读《</div>
+                    <div>我已阅读并同意《</div>
                     <div>QST用户协议</div>
                     <div>》</div>
                   </div>
@@ -151,17 +176,14 @@ function Register() {
                 />
               }
             />
-            手机号快速注册
+            账号注册说明
           </div>
-          <div className="content">请使用中国大陆手机号。编辑短信:</div>
-          <div className="hint interleave">
-            6-14位字符（支持数字/字母/符号）
-          </div>
-          <div className="content">作为登录密码，发送至:</div>
-          <div className="hint">1232-1313-2313</div>
-          <div className="content interleave">
-            操作注册成功，手机号作为登录号
-          </div>
+          <div className="content">用户账号要求：</div>
+          <div className="hint interleave">4-30位数字或字母组成</div>
+          <div className="content">用户昵称要求：</div>
+          <div className="hint interleave">不超过30个字符</div>
+          <div className="content">密码要求：</div>
+          <div className="hint">4-16位字符</div>
         </div>
       </div>
       <div className="footer2">

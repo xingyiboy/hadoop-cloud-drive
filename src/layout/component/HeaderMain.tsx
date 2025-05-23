@@ -5,13 +5,15 @@
  * @FilePath: \CloudDiskWeb\src\layout\component\HeaderMain.tsx
  */
 import { useNavigate } from "react-router-dom";
+import { Avatar, Dropdown, Menu, message } from "antd";
 
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/modules/user";
 import type { MenuProps } from "antd";
-import { Layout, Menu, Avatar, Space, Button } from "antd";
+import { Layout, Space, Button } from "antd";
 
 import "../style/header-main.scss";
+import { removeToken } from "@/utils/setToken";
 
 const { Header } = Layout;
 
@@ -27,10 +29,26 @@ function HeaderMain() {
   const dispatch = useAppDispatch();
   const { userName } = useAppSelector((state) => state.user);
 
-  function logOut() {
+  const handleLogout = () => {
+    // 只清除token，不清除保存的账号密码
+    removeToken();
+    // 清除用户状态
     dispatch(logout());
+    message.success("退出登录成功");
+    // 跳转到登录页
     navigate("/login", { replace: true });
-  }
+  };
+
+  const menu = (
+    <Menu>
+      <Menu.Item key="0">个人信息</Menu.Item>
+      <Menu.Item key="1">修改密码</Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="2" onClick={handleLogout}>
+        退出登录
+      </Menu.Item>
+    </Menu>
+  );
 
   return (
     <Header
@@ -51,18 +69,28 @@ function HeaderMain() {
       </div>
       <div className="right">
         <Space size={13}>
-          <Avatar
-            size={35}
-            src={
-              <img
+          <Dropdown overlay={menu} trigger={["click"]}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+            >
+              <Avatar
+                size={35}
                 src={
-                  "https://ts3.tc.mm.bing.net/th/id/OIP-C.g5M-iZUiocFCi9YAzojtRAAAAA?w=250&h=250&c=8&rs=1&qlt=90&o=6&dpr=1.5&pid=3.1&rm=2"
+                  <img
+                    src={
+                      "https://ts3.tc.mm.bing.net/th/id/OIP-C.g5M-iZUiocFCi9YAzojtRAAAAA?w=250&h=250&c=8&rs=1&qlt=90&o=6&dpr=1.5&pid=3.1&rm=2"
+                    }
+                    alt="avatar"
+                  />
                 }
-                alt="avatar"
               />
-            }
-          />
-          <div>admin</div>
+              <div style={{ marginLeft: "8px" }}>admin</div>
+            </div>
+          </Dropdown>
           <div>|</div>
           <div>当前目录:</div>
           <div>|</div>
