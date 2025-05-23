@@ -62,7 +62,7 @@ function Login() {
   return (
     <div className="main">
       <div className="login-page">
-        <div className="header">
+        <div className="header-login">
           <div className="left">
             <div>QST</div> <div>云端网盘</div>
           </div>
