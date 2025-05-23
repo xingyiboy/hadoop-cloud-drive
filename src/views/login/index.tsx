@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-04-28 14:48:50
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-04-29 10:17:53
+ * @LastEditTime: 2025-05-23 15:56:12
  * @FilePath: \CloudDiskWeb\src\views\login\index.tsx
  */
 import "./index.scss";
@@ -16,24 +16,37 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { login } from "@/api";
 import { setToken } from "@/utils/setToken";
 import { useEffect } from "react";
+import { encrypt, decrypt } from "@/utils/crypto";
 
-// 保存账号密码到localStorage
+// 保存加密后的账号密码到localStorage
 const saveCredentials = (username: string, password: string) => {
-  localStorage.setItem(
-    "savedCredentials",
-    JSON.stringify({ username, password })
-  );
+  try {
+    const encryptedData = encrypt(JSON.stringify({ username, password }));
+    localStorage.setItem("savedCredentials", encryptedData);
+  } catch (error) {
+    console.error("保存账号密码时发生错误:", error);
+  }
+};
+
+// 获取并解密保存的账号密码
+const getSavedCredentials = () => {
+  try {
+    const encryptedData = localStorage.getItem("savedCredentials");
+    if (!encryptedData) return null;
+
+    const decryptedData = decrypt(encryptedData);
+    return JSON.parse(decryptedData);
+  } catch (error) {
+    console.error("获取账号密码时发生错误:", error);
+    // 如果解密失败，清除可能损坏的数据
+    clearCredentials();
+    return null;
+  }
 };
 
 // 清除保存的账号密码
 const clearCredentials = () => {
   localStorage.removeItem("savedCredentials");
-};
-
-// 获取保存的账号密码
-const getSavedCredentials = () => {
-  const saved = localStorage.getItem("savedCredentials");
-  return saved ? JSON.parse(saved) : null;
 };
 
 function Login() {
@@ -77,7 +90,7 @@ function Login() {
         password: values.password,
       });
 
-      // 如果勾选了记住密码，保存账号密码
+      // 如果勾选了记住密码，保存加密后的账号密码
       if (values.remember) {
         saveCredentials(values.userName, values.password);
       } else {
@@ -161,7 +174,7 @@ function Login() {
                 <Input.Password prefix={<LockOutlined />} placeholder="密码" />
               </Form.Item>
               <Form.Item name="remember" valuePropName="checked">
-                <Checkbox>记住密码</Checkbox>
+                <Checkbox>记住我</Checkbox>
               </Form.Item>
               <Form.Item>
                 <Button type="primary" block htmlType="submit">
