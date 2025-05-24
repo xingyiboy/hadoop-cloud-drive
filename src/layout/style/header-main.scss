@@ -41,3 +41,59 @@
     font-size: 1em;
   }
 }
+
+.profile-form {
+  .ant-form-item {
+    margin-bottom: 24px;
+
+    .ant-form-item-label {
+      padding-bottom: 8px;
+
+      label {
+        color: #333;
+        font-size: 14px;
+      }
+    }
+
+    .ant-input {
+      height: 40px;
+      background: #f8f9fc;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 14px;
+
+      &::placeholder {
+        color: #999;
+      }
+
+      &[disabled] {
+        color: #333;
+        background-color: #f8f9fc;
+        cursor: default;
+      }
+    }
+  }
+}
+
+.ant-modal-content {
+  .ant-modal-header {
+    border-bottom: none;
+    padding: 24px 24px 0;
+
+    .ant-modal-title {
+      font-size: 18px;
+      font-weight: 500;
+      color: #333;
+    }
+  }
+
+  .ant-modal-body {
+    padding: 24px;
+  }
+
+  .ant-modal-close {
+    top: 24px;
+    right: 24px;
+  }
+}

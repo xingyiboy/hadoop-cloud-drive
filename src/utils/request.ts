@@ -45,7 +45,7 @@ _axios.interceptors.response.use(
     if (res.code === 0) {
       return res;
     }
-    return Promise.reject(res.msg || "请求失败");
+    return Promise.reject(res.msg);
   },
   (error) => {
     return Promise.reject(error?.response?.data?.msg || "网络错误");

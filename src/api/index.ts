@@ -46,3 +46,10 @@ export const requestName = (data: any): Promise<any> =>
 export const getUserProfile = (): Promise<ApiResponse<UserProfile>> => {
   return request.get("/admin-api/system/user/profile/get");
 };
+
+// 更新用户信息
+export const updateUserProfile = (
+  profile: Partial<UserProfile>
+): Promise<ApiResponse<void>> => {
+  return request.put("/admin-api/system/user/profile/update", profile);
+};
