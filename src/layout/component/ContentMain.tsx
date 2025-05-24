@@ -1,4 +1,13 @@
-import { Layout, Button, Input, Table, Checkbox, Upload, message } from "antd";
+import {
+  Layout,
+  Button,
+  Input,
+  Table,
+  Checkbox,
+  Upload,
+  message,
+  Pagination,
+} from "antd";
 import {
   UploadOutlined,
   FolderAddOutlined,
@@ -22,7 +31,11 @@ import { FileInfo } from "@/types/file";
 
 const { Content } = Layout;
 
-function ContentMain() {
+interface ContentMainProps {
+  fileType: FileType | undefined;
+}
+
+const ContentMain: React.FC<ContentMainProps> = ({ fileType }) => {
   // 选中的文件keys
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   // 当前路径
@@ -35,20 +48,54 @@ function ContentMain() {
   const [fileList, setFileList] = useState<FileInfo[]>([]);
   // 加载状态
   const [loading, setLoading] = useState(false);
+  // 搜索关键词
+  const [searchKeyword, setSearchKeyword] = useState("");
+  // 分页参数
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
 
   // 加载文件列表
-  const loadFileList = async () => {
+  const loadFileList = async (
+    page = 1,
+    type: FileType | undefined = undefined
+  ) => {
     try {
       setLoading(true);
       const res = await getFileList({
-        catalogue: currentPath,
+        catalogue: type === undefined ? currentPath : undefined,
+        type,
+        keyword: searchKeyword,
+        pageNo: page,
+        pageSize: pagination.pageSize,
       });
-      if (res.code === 0) {
-        setFileList(res.data);
+      if (res.code === 0 && res.data) {
+        // 从 res.data.list 获取文件列表
+        const list = res.data.list || [];
+        setFileList(list);
+        setPagination({
+          ...pagination,
+          current: page,
+          total: res.data.total || 0, // 使用后端返回的总数
+        });
       } else {
+        setFileList([]);
+        setPagination({
+          ...pagination,
+          current: 1,
+          total: 0,
+        });
         message.error(res.msg || "获取文件列表失败");
       }
     } catch (error) {
+      setFileList([]);
+      setPagination({
+        ...pagination,
+        current: 1,
+        total: 0,
+      });
       message.error("获取文件列表失败");
       console.error("Load file list error:", error);
     } finally {
@@ -58,8 +105,19 @@ function ContentMain() {
 
   // 首次加载和路径变化时加载文件列表
   useEffect(() => {
-    loadFileList();
-  }, [currentPath]);
+    loadFileList(1, fileType);
+  }, [currentPath, fileType]);
+
+  // 处理搜索
+  const handleSearch = () => {
+    loadFileList(1, fileType);
+  };
+
+  // 处理分页变化
+  const handlePageChange = (page: number, pageSize?: number) => {
+    setPagination({ ...pagination, current: page, pageSize: pageSize || 10 });
+    loadFileList(page, fileType);
+  };
 
   // 处理文件上传
   const handleFileUpload = async (file: File) => {
@@ -236,13 +294,18 @@ function ContentMain() {
               return false;
             }}
           >
-            <Button type="primary" icon={<UploadOutlined />}>
+            <Button
+              type="primary"
+              disabled={fileType !== undefined}
+              icon={<UploadOutlined />}
+            >
               上传
             </Button>
           </Upload>
           <Button
             icon={<FolderAddOutlined />}
             onClick={() => setCreateFolderVisible(true)}
+            disabled={fileType !== undefined}
           >
             新建文件夹
           </Button>
@@ -254,6 +317,9 @@ function ContentMain() {
             placeholder="搜索您的文件"
             prefix={<SearchOutlined />}
             className="search-input"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            onPressEnter={handleSearch}
           />
           <div className="view-switch">
             <BarsOutlined className="active" />
@@ -261,22 +327,44 @@ function ContentMain() {
           </div>
         </div>
       </div>
+      {fileType === undefined && (
+        <BreadcrumbNav
+          onPathChange={handlePathChange}
+          currentPath={currentPath}
+        />
+      )}
       <div className="table-header">
-        <div className="left">全部文件</div>
-        <div className="right">已加载全部，共{fileList.length}个</div>
+        <div className="left">
+          {fileType === undefined
+            ? "全部文件"
+            : FileTypeMap[fileType] || "未知类型"}
+        </div>
+        <div className="right">
+          已加载 {fileList?.length || 0} 条，共 {pagination?.total || 0} 个
+        </div>
       </div>
-      <BreadcrumbNav
-        onPathChange={handlePathChange}
-        currentPath={currentPath}
-      />
       <div className="table-container">
         <Table
           columns={columns}
-          dataSource={fileList}
+          dataSource={fileList || []}
           pagination={false}
           showHeader={true}
           loading={loading}
           rowKey="id"
+        />
+      </div>
+      <div
+        className="pagination-container"
+        style={{ textAlign: "right", marginTop: "16px" }}
+      >
+        <Pagination
+          current={pagination.current}
+          total={pagination.total}
+          pageSize={pagination.pageSize}
+          onChange={handlePageChange}
+          showSizeChanger
+          showQuickJumper
+          showTotal={(total) => `共 ${total} 条`}
         />
       </div>
       <CreateFolderModal
@@ -286,6 +374,6 @@ function ContentMain() {
       />
     </Content>
   );
-}
+};
 
 export default ContentMain;

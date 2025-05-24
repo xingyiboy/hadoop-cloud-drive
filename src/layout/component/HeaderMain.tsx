@@ -120,8 +120,8 @@ function HeaderMain() {
     navigate("/login", { replace: true });
   };
 
-  const handleMenuClick = ({ key }: { key: string }) => {
-    switch (key) {
+  const handleMenuClick: MenuProps["onClick"] = (info) => {
+    switch (info.key) {
       case "profile":
         setIsProfileModalVisible(true);
         break;
@@ -176,13 +176,24 @@ function HeaderMain() {
     form.resetFields();
   };
 
-  const menu = (
-    <Menu onClick={handleMenuClick}>
-      <Menu.Item key="profile">个人信息</Menu.Item>
-      <Menu.Divider />
-      <Menu.Item key="logout">退出登录</Menu.Item>
-    </Menu>
-  );
+  const menuItems: MenuProps["items"] = [
+    {
+      key: "profile",
+      label: "个人信息",
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "logout",
+      label: "退出登录",
+    },
+  ];
+
+  const menu: MenuProps = {
+    items: menuItems,
+    onClick: handleMenuClick,
+  };
 
   return (
     <>
@@ -204,7 +215,7 @@ function HeaderMain() {
         </div>
         <div className="right">
           <Space size={13}>
-            <Dropdown overlay={menu} trigger={["click"]}>
+            <Dropdown menu={menu} trigger={["click"]}>
               <div
                 style={{
                   display: "flex",

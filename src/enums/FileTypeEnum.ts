@@ -1,53 +1,47 @@
 export enum FileType {
+  DIRECTORY = 6,
   IMAGE = 0,
   AUDIO = 1,
   VIDEO = 2,
   DOCUMENT = 3,
   PLANT = 4,
   OTHER = 5,
-  DIRECTORY = 6,
 }
 
-export const FileTypeMap = {
+export const FileTypeMap: { [key in FileType]: string } = {
+  [FileType.DIRECTORY]: "文件夹",
   [FileType.IMAGE]: "图片",
   [FileType.AUDIO]: "音频",
   [FileType.VIDEO]: "视频",
   [FileType.DOCUMENT]: "文档",
   [FileType.PLANT]: "种子",
   [FileType.OTHER]: "其他",
-  [FileType.DIRECTORY]: "目录",
 };
 
 // 文件扩展名映射到文件类型
 export const getFileTypeByExt = (fileName: string): FileType => {
   const ext = fileName.toLowerCase().split(".").pop() || "";
 
-  // 图片文件
-  if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext)) {
-    return FileType.IMAGE;
-  }
+  const imageExts = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
+  const audioExts = ["mp3", "wav", "ogg", "flac", "aac"];
+  const videoExts = ["mp4", "avi", "mov", "wmv", "flv", "mkv"];
+  const documentExts = [
+    "doc",
+    "docx",
+    "pdf",
+    "txt",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
+  ];
+  const plantExts = ["torrent"];
 
-  // 音频文件
-  if (["mp3", "wav", "ogg", "flac", "m4a"].includes(ext)) {
-    return FileType.AUDIO;
-  }
-
-  // 视频文件
-  if (["mp4", "avi", "mov", "wmv", "flv", "mkv"].includes(ext)) {
-    return FileType.VIDEO;
-  }
-
-  // 文档文件
-  if (
-    ["doc", "docx", "pdf", "txt", "xls", "xlsx", "ppt", "pptx"].includes(ext)
-  ) {
-    return FileType.DOCUMENT;
-  }
-
-  // 种子文件
-  if (["torrent"].includes(ext)) {
-    return FileType.PLANT;
-  }
+  if (imageExts.includes(ext)) return FileType.IMAGE;
+  if (audioExts.includes(ext)) return FileType.AUDIO;
+  if (videoExts.includes(ext)) return FileType.VIDEO;
+  if (documentExts.includes(ext)) return FileType.DOCUMENT;
+  if (plantExts.includes(ext)) return FileType.PLANT;
 
   return FileType.OTHER;
 };

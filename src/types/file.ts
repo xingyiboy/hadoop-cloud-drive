@@ -23,11 +23,18 @@ export interface CreateFileRequest {
 // 文件列表请求参数
 export interface FileListRequest {
   catalogue?: string;
+  type?: FileType;
+  keyword?: string;
+  pageNo?: number;
+  pageSize?: number;
 }
 
 // 文件列表响应
 export interface FileListResponse {
   code: number;
-  data: FileInfo[];
+  data: {
+    list: FileInfo[];
+    total: number;
+  };
   msg: string;
 }

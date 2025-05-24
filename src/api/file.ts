@@ -29,8 +29,14 @@ export const createFile = (
 // 获取文件列表
 export const getFileList = (
   params: FileListRequest
-): Promise<ApiResponse<FileInfo[]>> => {
-  return request.get("/admin-api/system/hadoop-file/list", { params });
+): Promise<ApiResponse<{ list: FileInfo[]; total: number }>> => {
+  return request.get("/admin-api/system/hadoop-file/list", {
+    params: {
+      ...params,
+      pageNo: params.pageNo || 1,
+      pageSize: params.pageSize || 10,
+    },
+  });
 };
 
 // 删除文件或目录

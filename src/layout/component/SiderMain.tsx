@@ -4,39 +4,95 @@
  * @LastEditTime: 2025-05-12 16:16:14
  * @FilePath: \CloudDiskWeb\src\layout\component\SiderMain.tsx
  */
-const { Sider } = Layout;
 import { Layout, Menu } from "antd";
-import { ShareAltOutlined, RestOutlined } from "@ant-design/icons";
+import {
+  ShareAltOutlined,
+  RestOutlined,
+  FileImageOutlined,
+  CustomerServiceOutlined,
+  PlaySquareOutlined,
+  FileTextOutlined,
+  CloudDownloadOutlined,
+  FileUnknownOutlined,
+  FolderOutlined,
+} from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import React from "react";
 import "../style/sider-main.scss";
+import { FileType } from "@/enums/FileTypeEnum";
 
-const items2: MenuProps["items"] = [
-  { key: "1", icon: "", label: "全部文件" },
-  { key: "2", icon: "", label: "图片" },
-  { key: "3", icon: "", label: "音频" },
-  { key: "4", icon: "", label: "视频" },
-  { key: "5", icon: "", label: "文档" },
-  { key: "6", icon: "", label: "种子" },
-  { key: "7", icon: "", label: "其他" },
-  { key: "8", icon: React.createElement(ShareAltOutlined), label: "我的分享" },
-  { key: "9", icon: React.createElement(RestOutlined), label: "回收站" },
-];
+const { Sider } = Layout;
 
-console.log(items2);
+interface SiderMainProps {
+  onFileTypeChange: (type: FileType | undefined) => void;
+}
 
-function SiderMain() {
+const SiderMain: React.FC<SiderMainProps> = ({ onFileTypeChange }) => {
+  const items: MenuProps["items"] = [
+    {
+      key: "all",
+      icon: React.createElement(FolderOutlined),
+      label: "全部文件",
+      onClick: () => onFileTypeChange(undefined),
+    },
+    {
+      key: String(FileType.IMAGE),
+      icon: React.createElement(FileImageOutlined),
+      label: "图片",
+      onClick: () => onFileTypeChange(FileType.IMAGE),
+    },
+    {
+      key: String(FileType.AUDIO),
+      icon: React.createElement(CustomerServiceOutlined),
+      label: "音频",
+      onClick: () => onFileTypeChange(FileType.AUDIO),
+    },
+    {
+      key: String(FileType.VIDEO),
+      icon: React.createElement(PlaySquareOutlined),
+      label: "视频",
+      onClick: () => onFileTypeChange(FileType.VIDEO),
+    },
+    {
+      key: String(FileType.DOCUMENT),
+      icon: React.createElement(FileTextOutlined),
+      label: "文档",
+      onClick: () => onFileTypeChange(FileType.DOCUMENT),
+    },
+    {
+      key: String(FileType.PLANT),
+      icon: React.createElement(CloudDownloadOutlined),
+      label: "种子",
+      onClick: () => onFileTypeChange(FileType.PLANT),
+    },
+    {
+      key: String(FileType.OTHER),
+      icon: React.createElement(FileUnknownOutlined),
+      label: "其他",
+      onClick: () => onFileTypeChange(FileType.OTHER),
+    },
+    {
+      key: "share",
+      icon: React.createElement(ShareAltOutlined),
+      label: "我的分享",
+    },
+    {
+      key: "recycle",
+      icon: React.createElement(RestOutlined),
+      label: "回收站",
+    },
+  ];
+
   return (
     <Sider width={200} style={{ background: "#fff" }}>
       <Menu
         mode="inline"
-        defaultSelectedKeys={["1"]}
-        defaultOpenKeys={["1"]}
+        defaultSelectedKeys={["all"]}
         style={{ height: "100%", borderRight: 0 }}
-        items={items2}
+        items={items}
       />
     </Sider>
   );
-}
+};
 
 export default SiderMain;
