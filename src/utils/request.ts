@@ -6,18 +6,24 @@
  */
 // 封装 axios
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosRequestConfig } from "axios";
+import { message } from "antd";
 import { getToken } from "@/utils/setToken";
 
-// axios 实例配置
-const _axios: AxiosInstance = axios.create({
+export interface ApiResponse<T = any> {
+  code: number;
+  data: T;
+  msg?: string;
+}
+
+const instance = axios.create({
   baseURL: "http://localhost:48080",
   timeout: 30000,
 });
 
 // 请求拦截器
-_axios.interceptors.request.use(
-  (config: AxiosRequestConfig): AxiosRequestConfig => {
+instance.interceptors.request.use(
+  (config: AxiosRequestConfig) => {
     // 登录和注册接口不需要token
     if (
       ![
@@ -44,18 +50,56 @@ _axios.interceptors.request.use(
 );
 
 // 响应拦截器
-_axios.interceptors.response.use(
-  (response: AxiosResponse) => {
+instance.interceptors.response.use(
+  (response) => {
     const res = response.data;
     // code为0表示成功
     if (res.code === 0) {
       return res;
     }
-    return Promise.reject(res.msg);
+    message.error(res.msg || "请求失败");
+    return Promise.reject(res);
   },
   (error) => {
-    return Promise.reject(error?.response?.data?.msg || "网络错误");
+    message.error(error?.response?.data?.msg || "网络错误");
+    return Promise.reject(error);
   }
 );
 
-export default _axios;
+type RequestMethod = "get" | "post" | "put" | "delete";
+
+function createRequest(method: RequestMethod) {
+  return async function <T = any>(
+    url: string,
+    data?: any
+  ): Promise<ApiResponse<T>> {
+    const config: AxiosRequestConfig = {
+      url,
+      method,
+    };
+
+    if (method === "get") {
+      config.params = data;
+    } else {
+      config.data = data;
+    }
+
+    const response = await instance(config);
+    return response as unknown as ApiResponse<T>;
+  };
+}
+
+const request = {
+  get: createRequest("get"),
+  post: createRequest("post"),
+  put: createRequest("put"),
+  delete: createRequest("delete"),
+  request: async function <T = any>(
+    config: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
+    const response = await instance(config);
+    return response as unknown as ApiResponse<T>;
+  },
+};
+
+export default request;

@@ -1,42 +1,53 @@
 import request from "@/utils/request";
-import { ApiResponse } from "./index";
-import { CreateFileRequest, FileListRequest, FileInfo } from "@/types/file";
+import type { ApiResponse } from "@/utils/request";
+import { FileType } from "@/enums/FileTypeEnum";
+
+export interface FileInfo {
+  id: number;
+  name: string;
+  type: FileType;
+  size?: string;
+  catalogue: string;
+  createTime: number;
+}
+
+interface CreateFileParams {
+  name: string;
+  type: FileType;
+  catalogue?: string;
+  size?: string;
+  file?: File;
+}
+
+interface ProgressConfig {
+  onUploadProgress?: (progressEvent: ProgressEvent) => void;
+}
 
 // 创建文件或目录
 export const createFile = (
-  data: CreateFileRequest
-): Promise<ApiResponse<number>> => {
-  const formData = new FormData();
-  formData.append("name", data.name);
-  formData.append("type", data.type.toString());
-  formData.append("catalogue", data.catalogue);
-
-  if (data.size) {
-    formData.append("size", data.size);
-  }
-
-  if (data.file) {
-    formData.append("file", data.file);
-  }
-
-  return request.post("/admin-api/system/hadoop-file/create", formData, {
+  data: CreateFileParams | FormData,
+  config?: ProgressConfig
+): Promise<ApiResponse> => {
+  return request.request({
+    url: "/admin-api/system/hadoop-file/create",
+    method: "POST",
+    data,
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    ...config,
   });
 };
 
 // 获取文件列表
-export const getFileList = (
-  params: FileListRequest
-): Promise<ApiResponse<{ list: FileInfo[]; total: number }>> => {
-  return request.get("/admin-api/system/hadoop-file/list", {
-    params: {
-      ...params,
-      pageNo: params.pageNo || 1,
-      pageSize: params.pageSize || 10,
-    },
-  });
+export const getFileList = (params: {
+  catalogue?: string;
+  type?: FileType;
+  keyword?: string;
+  pageNo?: number;
+  pageSize?: number;
+}): Promise<ApiResponse<{ list: FileInfo[]; total: number }>> => {
+  return request.get("/admin-api/system/hadoop-file/list", params);
 };
 
 // 删除文件或目录

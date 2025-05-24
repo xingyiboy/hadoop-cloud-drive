@@ -8,6 +8,7 @@ import {
   message,
   Pagination,
 } from "antd";
+import type { RcFile } from "antd/lib/upload";
 import {
   UploadOutlined,
   FolderAddOutlined,
@@ -24,11 +25,18 @@ import CreateFolderModal from "./CreateFolderModal";
 import { FileType, FileTypeMap, getFileTypeByExt } from "../enums/FileTypeEnum";
 import { createFile, getFileList } from "@/api/file";
 import { FileInfo } from "@/types/file";
+import { useUploadStore } from "../store/uploadStore";
 
 const { Content } = Layout;
 
 interface DiskContentProps {
   fileType: FileType | undefined;
+}
+
+interface ApiResponse<T> {
+  code: number;
+  data: T;
+  msg?: string;
 }
 
 const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
@@ -114,27 +122,62 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   };
 
   // 处理文件上传
-  const handleFileUpload = async (file: File) => {
-    try {
-      const fileType = getFileTypeByExt(file.name);
-      const res = await createFile({
-        name: file.name,
-        type: fileType,
-        catalogue: currentPath,
-        size: (file.size / (1024 * 1024)).toFixed(2),
-        file: file,
-      });
+  const handleFileUpload = async (fileList: File[] | RcFile[]) => {
+    const fileArray = Array.from(fileList);
+    const uploadStore = useUploadStore.getState();
 
-      if (res.code === 0) {
-        message.success("文件上传成功");
-        loadFileList();
-      } else {
-        message.error(res.msg || "文件上传失败");
+    // 生成任务ID并添加到上传队列
+    const tasks = fileArray.map((file) => ({
+      id: `${file.name}-${Date.now()}-${Math.random()}`,
+      file,
+    }));
+
+    // 添加任务到上传队列
+    uploadStore.addTasks(
+      tasks.map((task) => ({
+        file: task.file,
+        id: task.id,
+        catalogue: currentPath,
+      }))
+    );
+
+    message.success(`已添加 ${fileArray.length} 个文件到上传队列`);
+
+    // 开始逐个上传文件
+    for (const task of tasks) {
+      try {
+        uploadStore.updateTaskStatus(task.id, "uploading");
+        const fileType = getFileTypeByExt(task.file.name);
+
+        // 创建 FormData
+        const formData = new FormData();
+        formData.append("file", task.file);
+        formData.append("name", task.file.name);
+        formData.append("type", fileType.toString());
+        formData.append("catalogue", currentPath);
+        formData.append("size", (task.file.size / (1024 * 1024)).toFixed(2));
+
+        // 上传文件
+        const res = await createFile(formData, {
+          onUploadProgress: (progressEvent: ProgressEvent) => {
+            const progress = (progressEvent.loaded / progressEvent.total) * 100;
+            uploadStore.updateTaskProgress(task.id, progress);
+          },
+        });
+
+        if (res.code === 0) {
+          uploadStore.updateTaskStatus(task.id, "completed");
+        } else {
+          uploadStore.updateTaskStatus(task.id, "error", res.msg || "上传失败");
+        }
+      } catch (error) {
+        uploadStore.updateTaskStatus(task.id, "error", "上传失败");
+        console.error("Upload error:", error);
       }
-    } catch (error) {
-      message.error("文件上传失败");
-      console.error("Upload error:", error);
     }
+
+    // 刷新文件列表
+    loadFileList();
   };
 
   // 处理新建文件夹
@@ -281,9 +324,13 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       <div className="operation-bar">
         <div className="left-buttons">
           <Upload
+            multiple
             showUploadList={false}
-            beforeUpload={(file) => {
-              handleFileUpload(file);
+            beforeUpload={(file, fileList) => {
+              // 只在完整的文件列表上传时处理
+              if (file === fileList[0]) {
+                handleFileUpload(fileList);
+              }
               return false;
             }}
           >
