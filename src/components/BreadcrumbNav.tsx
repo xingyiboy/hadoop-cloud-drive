@@ -1,18 +1,16 @@
 import { Breadcrumb, Button } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 interface BreadcrumbNavProps {
   onPathChange: (path: string) => void;
+  currentPath: string;
 }
 
-const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({ onPathChange }) => {
-  // 从 localStorage 获取当前路径，默认为根目录
-  const [currentPath, setCurrentPath] = useState<string>(() => {
-    return localStorage.getItem("currentPath") || "/";
-  });
-
-  // 当路径改变时，更新 localStorage
+const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
+  onPathChange,
+  currentPath,
+}) => {
   useEffect(() => {
     localStorage.setItem("currentPath", currentPath);
   }, [currentPath]);
@@ -23,7 +21,6 @@ const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({ onPathChange }) => {
     const pathParts = currentPath.split("/").filter(Boolean);
     pathParts.pop(); // 移除最后一个目录
     const newPath = pathParts.length ? `/${pathParts.join("/")}` : "/";
-    setCurrentPath(newPath);
     onPathChange(newPath);
   };
 
@@ -31,14 +28,12 @@ const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({ onPathChange }) => {
   const handleBreadcrumbClick = (index: number) => {
     if (index === -1) {
       // 点击根目录
-      setCurrentPath("/");
       onPathChange("/");
       return;
     }
     const pathParts = currentPath.split("/").filter(Boolean);
     const newPathParts = pathParts.slice(0, index + 1);
     const newPath = `/${newPathParts.join("/")}`;
-    setCurrentPath(newPath);
     onPathChange(newPath);
   };
 
@@ -49,7 +44,7 @@ const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({ onPathChange }) => {
 
     // 添加根目录
     items.push({
-      title: "/",
+      title: "根目录",
       path: "/",
     });
 
@@ -87,7 +82,7 @@ const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({ onPathChange }) => {
           onClick={() => handleBreadcrumbClick(-1)}
           className="breadcrumb-item"
         >
-          <span style={{ cursor: "pointer" }}>/</span>
+          <span style={{ cursor: "pointer" }}>根目录</span>
         </Breadcrumb.Item>
         {breadcrumbItems.slice(1).map((item, index) => (
           <Breadcrumb.Item

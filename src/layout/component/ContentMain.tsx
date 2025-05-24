@@ -261,11 +261,14 @@ function ContentMain() {
           </div>
         </div>
       </div>
-      <BreadcrumbNav onPathChange={handlePathChange} />
       <div className="table-header">
         <div className="left">全部文件</div>
         <div className="right">已加载全部，共{fileList.length}个</div>
       </div>
+      <BreadcrumbNav
+        onPathChange={handlePathChange}
+        currentPath={currentPath}
+      />
       <div className="table-container">
         <Table
           columns={columns}

@@ -45,7 +45,34 @@ function HeaderMain() {
   const userProfile = useAppSelector((state) => state.user.profile);
   const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [currentPath, setCurrentPath] = useState(
+    localStorage.getItem("currentPath") || "/"
+  );
   const [form] = Form.useForm();
+
+  // 监听 localStorage 中 currentPath 的变化
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const newPath = localStorage.getItem("currentPath") || "/";
+      setCurrentPath(newPath);
+    };
+
+    // 添加事件监听
+    window.addEventListener("storage", handleStorageChange);
+
+    // 创建一个定时器每秒检查一次
+    const interval = setInterval(() => {
+      const newPath = localStorage.getItem("currentPath") || "/";
+      if (newPath !== currentPath) {
+        setCurrentPath(newPath);
+      }
+    }, 1000);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [currentPath]);
 
   // 在组件加载时获取用户信息
   useEffect(() => {
@@ -203,7 +230,7 @@ function HeaderMain() {
               </div>
             </Dropdown>
             <div>|</div>
-            <div>当前目录: {localStorage.getItem("currentPath") || "/"}</div>
+            <div>当前目录: {currentPath}</div>
             <Button shape="round" danger type="primary">
               会员中心
             </Button>
