@@ -141,6 +141,7 @@ function ContentMain() {
 
   return (
     <Content className="content-main">
+      <BreadcrumbNav onPathChange={handlePathChange} />
       <div className="operation-bar">
         <div className="left-buttons">
           <Button type="primary" icon={<UploadOutlined />}>
@@ -162,7 +163,7 @@ function ContentMain() {
           </div>
         </div>
       </div>
-      <BreadcrumbNav onPathChange={handlePathChange} />
+
       <div className="table-header">
         <div className="left">全部文件</div>
         <div className="right">已加载全部，共{data.length}个</div>

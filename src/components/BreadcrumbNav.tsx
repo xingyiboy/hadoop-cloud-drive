@@ -69,7 +69,13 @@ const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({ onPathChange }) => {
   const breadcrumbItems = generateBreadcrumbItems();
 
   return (
-    <div style={{ display: "flex", alignItems: "center", padding: "8px 16px" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        padding: "30px 10px 0px 24px",
+      }}
+    >
       <Button
         icon={<ArrowLeftOutlined />}
         onClick={handleBack}
