@@ -17,13 +17,13 @@ import {
   Space,
   Radio,
   Select,
+  Layout,
 } from "antd";
 import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout, setUserProfile } from "@/store/modules/user";
 import type { MenuProps } from "antd";
-import { Layout } from "antd";
 
 import "../style/header-main.scss";
 import { removeToken, getToken } from "@/utils/setToken";
@@ -31,15 +31,13 @@ import { getUserProfile, updateUserProfile } from "@/api";
 
 const { Header } = Layout;
 
-const items1: MenuProps["items"] = [
-  { key: 1, label: "网盘" },
-  { key: 2, label: "分享" },
-  { key: 3, label: "正在上传" },
-  { key: 4, label: "正在下载" },
-];
+interface HeaderMainProps {
+  activeTab: number;
+  onTabChange: (key: number) => void;
+}
 
-function HeaderMain() {
-  const navigate = useNavigate(); //允许使用编程式导航
+const HeaderMain: React.FC<HeaderMainProps> = ({ activeTab, onTabChange }) => {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { username } = useAppSelector((state) => state.user);
   const userProfile = useAppSelector((state) => state.user.profile);
@@ -110,17 +108,31 @@ function HeaderMain() {
     }
   }, []);
 
-  const handleLogout = () => {
-    // 只清除token，不清除保存的账号密码
-    removeToken();
-    // 清除用户状态
-    dispatch(logout());
-    message.success("退出登录成功");
-    // 跳转到登录页
-    navigate("/login", { replace: true });
-  };
+  // 用户菜单项
+  const userMenuItems: MenuProps["items"] = [
+    {
+      key: "profile",
+      label: "个人信息",
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "logout",
+      label: "退出登录",
+    },
+  ];
 
-  const handleMenuClick: MenuProps["onClick"] = (info) => {
+  // 顶部导航菜单项
+  const navMenuItems: MenuProps["items"] = [
+    { key: "1", label: "网盘" },
+    { key: "2", label: "分享" },
+    { key: "3", label: "正在上传" },
+    { key: "4", label: "正在下载" },
+  ];
+
+  // 处理用户菜单点击
+  const handleUserMenuClick: MenuProps["onClick"] = (info) => {
     switch (info.key) {
       case "profile":
         setIsProfileModalVisible(true);
@@ -129,6 +141,14 @@ function HeaderMain() {
         handleLogout();
         break;
     }
+  };
+
+  // 处理退出登录
+  const handleLogout = () => {
+    removeToken();
+    dispatch(logout());
+    message.success("退出登录成功");
+    navigate("/login", { replace: true });
   };
 
   const handleEditProfile = () => {
@@ -176,78 +196,56 @@ function HeaderMain() {
     form.resetFields();
   };
 
-  const menuItems: MenuProps["items"] = [
-    {
-      key: "profile",
-      label: "个人信息",
-    },
-    {
-      type: "divider",
-    },
-    {
-      key: "logout",
-      label: "退出登录",
-    },
-  ];
-
-  const menu: MenuProps = {
-    items: menuItems,
-    onClick: handleMenuClick,
-  };
-
   return (
-    <>
-      <Header
-        className="header"
-        style={{ display: "flex", alignItems: "center" }}
-      >
-        <div className="left">
-          <div className="logo">QST</div>
-          <div className="logo-title">云端网盘</div>
-          <Menu
-            className="menu"
-            theme="light"
-            mode="horizontal"
-            defaultSelectedKeys={["1"]}
-            items={items1}
-            style={{ flex: 1, minWidth: 0 }}
-          />
-        </div>
-        <div className="right">
-          <Space size={13}>
-            <Dropdown menu={menu} trigger={["click"]}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  cursor: "pointer",
-                }}
-              >
-                <Avatar
-                  size={35}
-                  src={
-                    <img
-                      src={
-                        userProfile?.avatar ||
-                        "https://ts3.tc.mm.bing.net/th/id/OIP-C.g5M-iZUiocFCi9YAzojtRAAAAA?w=250&h=250&c=8&rs=1&qlt=90&o=6&dpr=1.5&pid=3.1&rm=2"
-                      }
-                      alt="avatar"
-                    />
-                  }
-                />
-                <div style={{ marginLeft: "8px" }}>
-                  {userProfile?.nickname || userProfile?.username || "未登录"}
-                </div>
+    <Header
+      className="header"
+      style={{ display: "flex", alignItems: "center" }}
+    >
+      <div className="left">
+        <div className="logo">QST</div>
+        <div className="logo-title">云端网盘</div>
+        <Menu
+          className="menu"
+          theme="light"
+          mode="horizontal"
+          selectedKeys={[activeTab.toString()]}
+          items={navMenuItems}
+          style={{ flex: 1, minWidth: 0 }}
+          onClick={(info) => onTabChange(Number(info.key))}
+        />
+      </div>
+      <div className="right">
+        <Space size={13}>
+          <Dropdown
+            menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
+            trigger={["click"]}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+            >
+              <Avatar
+                size={35}
+                src={
+                  userProfile?.avatar ||
+                  "https://ts3.tc.mm.bing.net/th/id/OIP-C.g5M-iZUiocFCi9YAzojtRAAAAA?w=250&h=250&c=8&rs=1&qlt=90&o=6&dpr=1.5&pid=3.1&rm=2"
+                }
+              />
+              <div style={{ marginLeft: "8px" }}>
+                {userProfile?.nickname || userProfile?.username || "未登录"}
               </div>
-            </Dropdown>
-            <div>|</div>
-            <div>当前目录: {currentPath}</div>
-            <Button shape="round" danger type="primary">
-              会员中心
-            </Button>
-          </Space>
-        </div>
-      </Header>
+            </div>
+          </Dropdown>
+          <div>|</div>
+          <div>当前目录: {currentPath}</div>
+          <Button shape="round" danger type="primary">
+            会员中心
+          </Button>
+        </Space>
+      </div>
 
       <Modal
         title="个人信息"
@@ -391,8 +389,8 @@ function HeaderMain() {
           </div>
         </Form>
       </Modal>
-    </>
+    </Header>
   );
-}
+};
 
 export default HeaderMain;

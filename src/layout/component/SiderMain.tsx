@@ -24,72 +24,136 @@ import { FileType } from "@/enums/FileTypeEnum";
 const { Sider } = Layout;
 
 interface SiderMainProps {
-  onFileTypeChange: (type: FileType | undefined) => void;
+  onFileTypeChange?: (type: FileType | undefined) => void;
+  activeTab: number;
 }
 
-const SiderMain: React.FC<SiderMainProps> = ({ onFileTypeChange }) => {
-  const items: MenuProps["items"] = [
+const SiderMain: React.FC<SiderMainProps> = ({
+  onFileTypeChange,
+  activeTab,
+}) => {
+  // 网盘页面的菜单项
+  const diskMenuItems = [
     {
       key: "all",
-      icon: React.createElement(FolderOutlined),
       label: "全部文件",
-      onClick: () => onFileTypeChange(undefined),
     },
     {
-      key: String(FileType.IMAGE),
-      icon: React.createElement(FileImageOutlined),
+      key: "image",
       label: "图片",
-      onClick: () => onFileTypeChange(FileType.IMAGE),
     },
     {
-      key: String(FileType.AUDIO),
-      icon: React.createElement(CustomerServiceOutlined),
-      label: "音频",
-      onClick: () => onFileTypeChange(FileType.AUDIO),
-    },
-    {
-      key: String(FileType.VIDEO),
-      icon: React.createElement(PlaySquareOutlined),
-      label: "视频",
-      onClick: () => onFileTypeChange(FileType.VIDEO),
-    },
-    {
-      key: String(FileType.DOCUMENT),
-      icon: React.createElement(FileTextOutlined),
+      key: "document",
       label: "文档",
-      onClick: () => onFileTypeChange(FileType.DOCUMENT),
     },
     {
-      key: String(FileType.PLANT),
-      icon: React.createElement(CloudDownloadOutlined),
-      label: "种子",
-      onClick: () => onFileTypeChange(FileType.PLANT),
+      key: "video",
+      label: "视频",
     },
     {
-      key: String(FileType.OTHER),
-      icon: React.createElement(FileUnknownOutlined),
+      key: "audio",
+      label: "音频",
+    },
+    {
+      key: "other",
       label: "其他",
-      onClick: () => onFileTypeChange(FileType.OTHER),
-    },
-    {
-      key: "share",
-      icon: React.createElement(ShareAltOutlined),
-      label: "我的分享",
-    },
-    {
-      key: "recycle",
-      icon: React.createElement(RestOutlined),
-      label: "回收站",
     },
   ];
 
+  // 分享页面的菜单项
+  const shareMenuItems = [
+    {
+      key: "shared_by_me",
+      label: "我的分享",
+    },
+    {
+      key: "shared_to_me",
+      label: "收到的分享",
+    },
+  ];
+
+  // 上传页面的菜单项
+  const uploadMenuItems = [
+    {
+      key: "uploading",
+      label: "正在上传",
+    },
+    {
+      key: "uploaded",
+      label: "已上传",
+    },
+    {
+      key: "upload_failed",
+      label: "上传失败",
+    },
+  ];
+
+  // 下载页面的菜单项
+  const downloadMenuItems = [
+    {
+      key: "downloading",
+      label: "正在下载",
+    },
+    {
+      key: "downloaded",
+      label: "已下载",
+    },
+    {
+      key: "download_failed",
+      label: "下载失败",
+    },
+  ];
+
+  // 根据当前标签页获取对应的菜单项
+  const getMenuItems = () => {
+    switch (activeTab) {
+      case 1:
+        return diskMenuItems;
+      case 2:
+        return shareMenuItems;
+      case 3:
+        return uploadMenuItems;
+      case 4:
+        return downloadMenuItems;
+      default:
+        return [];
+    }
+  };
+
+  // 处理菜单点击
+  const handleMenuClick = ({ key }: { key: string }) => {
+    if (activeTab === 1 && onFileTypeChange) {
+      // 只在网盘页面处理文件类型切换
+      switch (key) {
+        case "all":
+          onFileTypeChange(undefined);
+          break;
+        case "image":
+          onFileTypeChange(FileType.IMAGE);
+          break;
+        case "document":
+          onFileTypeChange(FileType.DOCUMENT);
+          break;
+        case "video":
+          onFileTypeChange(FileType.VIDEO);
+          break;
+        case "audio":
+          onFileTypeChange(FileType.AUDIO);
+          break;
+        case "other":
+          onFileTypeChange(FileType.OTHER);
+          break;
+      }
+    }
+  };
+
   return (
-    <Sider width={200} style={{ background: "#fff" }}>
+    <Sider className="sider-main" width={200}>
       <Menu
         mode="inline"
-        defaultSelectedKeys={["all"]}
         style={{ height: "100%", borderRight: 0 }}
-        items={items}
+        items={getMenuItems()}
+        onClick={handleMenuClick}
       />
     </Sider>
   );
