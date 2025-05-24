@@ -1,4 +1,4 @@
-import { Layout, Button, Input, Table, Checkbox } from "antd";
+import { Layout, Button, Input, Table, Checkbox, Upload, message } from "antd";
 import {
   UploadOutlined,
   FolderAddOutlined,
@@ -11,6 +11,10 @@ import {
 import { useState, useEffect } from "react";
 import "../style/content-main.scss";
 import BreadcrumbNav from "../../components/BreadcrumbNav";
+import CreateFolderModal from "../../components/CreateFolderModal";
+import { FileType, getFileTypeByExt } from "../../enums/FileTypeEnum";
+import { createFile, getFileList } from "@/api/file";
+import { FileInfo } from "@/types/file";
 
 const { Content } = Layout;
 
@@ -21,51 +25,109 @@ function ContentMain() {
   const [currentPath, setCurrentPath] = useState<string>(
     localStorage.getItem("currentPath") || "/"
   );
-  // 示例数据
-  const [data, setData] = useState([
-    {
-      key: "1",
-      fileName: "qst",
-      type: "目录",
-      size: "-",
-      modifyDate: "2022-08-23 06:44:32",
-      path: "/qst",
-    },
-    {
-      key: "2",
-      fileName: "test",
-      type: "文件",
-      size: "-",
-      modifyDate: "2022-08-23 06:44:32",
-      path: "/test",
-    },
-  ]);
+  // 新建文件夹弹窗
+  const [createFolderVisible, setCreateFolderVisible] = useState(false);
+  // 文件列表
+  const [fileList, setFileList] = useState<FileInfo[]>([]);
+  // 加载状态
+  const [loading, setLoading] = useState(false);
+
+  // 加载文件列表
+  const loadFileList = async () => {
+    try {
+      setLoading(true);
+      const res = await getFileList({
+        catalogue: currentPath,
+      });
+      if (res.code === 0) {
+        setFileList(res.data);
+      } else {
+        message.error(res.msg || "获取文件列表失败");
+      }
+    } catch (error) {
+      message.error("获取文件列表失败");
+      console.error("Load file list error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 首次加载和路径变化时加载文件列表
+  useEffect(() => {
+    loadFileList();
+  }, [currentPath]);
+
+  // 处理文件上传
+  const handleFileUpload = async (file: File) => {
+    try {
+      const fileType = getFileTypeByExt(file.name);
+      const res = await createFile({
+        name: file.name,
+        type: fileType,
+        catalogue: currentPath,
+        size: (file.size / (1024 * 1024)).toFixed(2), // 转换为MB
+        file: file,
+      });
+
+      if (res.code === 0) {
+        message.success("文件上传成功");
+        loadFileList(); // 刷新文件列表
+      } else {
+        message.error(res.msg || "文件上传失败");
+      }
+    } catch (error) {
+      message.error("文件上传失败");
+      console.error("Upload error:", error);
+    }
+  };
+
+  // 处理新建文件夹
+  const handleCreateFolder = async (values: { name: string }) => {
+    try {
+      const res = await createFile({
+        name: values.name,
+        type: FileType.DIRECTORY,
+        catalogue: currentPath,
+      });
+
+      if (res.code === 0) {
+        message.success("文件夹创建成功");
+        setCreateFolderVisible(false);
+        loadFileList(); // 刷新文件列表
+      } else {
+        message.error(res.msg || "文件夹创建失败");
+      }
+    } catch (error) {
+      message.error("文件夹创建失败");
+      console.error("Create folder error:", error);
+    }
+  };
 
   // 文件点击处理函数
-  const handleFileClick = (record: any) => {
-    if (record.type === "目录") {
-      const newPath = record.path;
+  const handleFileClick = (record: FileInfo) => {
+    if (record.type === FileType.DIRECTORY) {
+      const newPath =
+        currentPath === "/"
+          ? `/${record.name}`
+          : `${currentPath}/${record.name}`;
       setCurrentPath(newPath);
       localStorage.setItem("currentPath", newPath);
-      // TODO: 这里需要根据新路径加载对应目录的文件列表
-      // loadFileList(newPath);
     } else {
-      // 处理文件点击逻辑
-      console.log("点击文件:", record.fileName);
+      // TODO: 处理文件点击，比如预览文件
+      console.log("点击文件:", record.name);
     }
   };
 
   // 处理路径变化
   const handlePathChange = (newPath: string) => {
     setCurrentPath(newPath);
-    // TODO: 这里需要根据新路径加载对应目录的文件列表
-    // loadFileList(newPath);
+    localStorage.setItem("currentPath", newPath);
   };
 
   // 处理全选
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRowKeys(data.map((item) => item.key));
+      setSelectedRowKeys(fileList.map((item) => item.id.toString()));
     } else {
       setSelectedRowKeys([]);
     }
@@ -81,8 +143,8 @@ function ContentMain() {
   };
 
   // 获取文件图标
-  const getFileIcon = (type: string) => {
-    if (type === "目录") {
+  const getFileIcon = (type: FileType) => {
+    if (type === FileType.DIRECTORY) {
       return <span className="folder-icon">📁</span>;
     }
     return <span className="file-icon">📄</span>;
@@ -94,23 +156,28 @@ function ContentMain() {
       title: (
         <div className="file-name-header">
           <Checkbox
-            checked={data.length > 0 && selectedRowKeys.length === data.length}
+            checked={
+              fileList.length > 0 && selectedRowKeys.length === fileList.length
+            }
             indeterminate={
-              selectedRowKeys.length > 0 && selectedRowKeys.length < data.length
+              selectedRowKeys.length > 0 &&
+              selectedRowKeys.length < fileList.length
             }
             onChange={(e) => handleSelectAll(e.target.checked)}
           />
           <span>文件名</span>
         </div>
       ),
-      dataIndex: "fileName",
-      key: "fileName",
-      render: (text: string, record: any) => (
+      dataIndex: "name",
+      key: "name",
+      render: (text: string, record: FileInfo) => (
         <div className="file-name-cell">
           <Checkbox
-            checked={selectedRowKeys.includes(record.key)}
+            checked={selectedRowKeys.includes(record.id.toString())}
             onClick={(e) => e.stopPropagation()}
-            onChange={(e) => handleSelect(e.target.checked, record.key)}
+            onChange={(e) =>
+              handleSelect(e.target.checked, record.id.toString())
+            }
           />
           <div
             className="file-name-content"
@@ -126,28 +193,44 @@ function ContentMain() {
       title: "类型",
       dataIndex: "type",
       key: "type",
+      render: (type: FileType) =>
+        type === FileType.DIRECTORY ? "目录" : "文件",
     },
     {
       title: "大小",
       dataIndex: "size",
       key: "size",
+      render: (size: string | null) => size || "-",
     },
     {
       title: "修改日期",
-      dataIndex: "modifyDate",
-      key: "modifyDate",
+      dataIndex: "createTime",
+      key: "createTime",
+      render: (time: number) => new Date(time).toLocaleString(),
     },
   ];
 
   return (
     <Content className="content-main">
-      <BreadcrumbNav onPathChange={handlePathChange} />
       <div className="operation-bar">
         <div className="left-buttons">
-          <Button type="primary" icon={<UploadOutlined />}>
-            上传
+          <Upload
+            showUploadList={false}
+            beforeUpload={(file) => {
+              handleFileUpload(file);
+              return false;
+            }}
+          >
+            <Button type="primary" icon={<UploadOutlined />}>
+              上传
+            </Button>
+          </Upload>
+          <Button
+            icon={<FolderAddOutlined />}
+            onClick={() => setCreateFolderVisible(true)}
+          >
+            新建文件夹
           </Button>
-          <Button icon={<FolderAddOutlined />}>新建文件夹</Button>
           <Button icon={<CloudDownloadOutlined />}>离线下载</Button>
           <Button icon={<SettingOutlined />}>我的设备</Button>
         </div>
@@ -163,19 +246,26 @@ function ContentMain() {
           </div>
         </div>
       </div>
-
+      <BreadcrumbNav onPathChange={handlePathChange} />
       <div className="table-header">
         <div className="left">全部文件</div>
-        <div className="right">已加载全部，共{data.length}个</div>
+        <div className="right">已加载全部，共{fileList.length}个</div>
       </div>
       <div className="table-container">
         <Table
           columns={columns}
-          dataSource={data}
+          dataSource={fileList}
           pagination={false}
           showHeader={true}
+          loading={loading}
+          rowKey="id"
         />
       </div>
+      <CreateFolderModal
+        visible={createFolderVisible}
+        onCancel={() => setCreateFolderVisible(false)}
+        onSubmit={handleCreateFolder}
+      />
     </Content>
   );
 }
