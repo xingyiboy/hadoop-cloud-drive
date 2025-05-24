@@ -10,10 +10,10 @@ import { Form, Input, Button, Checkbox, Avatar, Space, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
 import { useAppDispatch } from "@/store/hooks";
-import { login as loginAction } from "@/store/modules/user";
+import { login as loginAction, setUserProfile } from "@/store/modules/user";
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { login } from "@/api";
+import { login, getUserProfile } from "@/api";
 import { setToken } from "@/utils/setToken";
 import { useEffect } from "react";
 import { encrypt, decrypt } from "@/utils/crypto";
@@ -99,12 +99,20 @@ function Login() {
 
       // 保存token
       setToken(response.data.accessToken);
-      // 更新用户状态
-      dispatch(loginAction(values.userName));
-      message.success("登录成功");
-      navigate("/", { replace: true });
+
+      // 获取用户信息
+      const userProfileRes = await getUserProfile();
+      if (userProfileRes.code === 0) {
+        dispatch(setUserProfile(userProfileRes.data));
+        // 更新用户状态
+        dispatch(loginAction(values.userName));
+        message.success("登录成功");
+        navigate("/", { replace: true });
+      } else {
+        message.error(userProfileRes.msg || "获取用户信息失败");
+      }
     } catch (error: any) {
-      message.error(error || "登录失败");
+      message.error(error?.msg || "登录失败");
     }
   };
   //图标

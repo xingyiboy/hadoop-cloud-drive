@@ -1,4 +1,5 @@
 import request from "@/utils/request";
+import { UserProfile } from "@/types/user";
 
 // 登录接口
 export interface LoginRequest {
@@ -40,3 +41,8 @@ export const register = (data: RegisterRequest): Promise<ApiResponse<void>> =>
 // 使用封装后的 axios 配置接口
 export const requestName = (data: any): Promise<any> =>
   request.post(`api-url`, data);
+
+// 获取用户信息
+export const getUserProfile = (): Promise<ApiResponse<UserProfile>> => {
+  return request.get("/admin-api/system/user/profile/get");
+};
