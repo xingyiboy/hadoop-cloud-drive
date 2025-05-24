@@ -203,7 +203,7 @@ function HeaderMain() {
               </div>
             </Dropdown>
             <div>|</div>
-            <div>当前目录:</div>
+            <div>当前目录: {localStorage.getItem("currentPath") || "/"}</div>
             <Button shape="round" danger type="primary">
               会员中心
             </Button>

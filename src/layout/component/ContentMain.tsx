@@ -7,25 +7,29 @@ import {
   SearchOutlined,
   AppstoreOutlined,
   BarsOutlined,
-  FolderOutlined,
-  FileOutlined,
 } from "@ant-design/icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../style/content-main.scss";
+import BreadcrumbNav from "../../components/BreadcrumbNav";
 
 const { Content } = Layout;
 
 function ContentMain() {
   // 选中的文件keys
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  // 当前路径
+  const [currentPath, setCurrentPath] = useState<string>(
+    localStorage.getItem("currentPath") || "/"
+  );
   // 示例数据
-  const data = [
+  const [data, setData] = useState([
     {
       key: "1",
       fileName: "qst",
       type: "目录",
       size: "-",
       modifyDate: "2022-08-23 06:44:32",
+      path: "/qst",
     },
     {
       key: "2",
@@ -33,13 +37,29 @@ function ContentMain() {
       type: "文件",
       size: "-",
       modifyDate: "2022-08-23 06:44:32",
+      path: "/test",
     },
-  ];
+  ]);
 
   // 文件点击处理函数
-  const handleFileClick = (fileName: string) => {
-    console.log("点击文件:", fileName);
-    // 这里可以添加文件点击后的逻辑
+  const handleFileClick = (record: any) => {
+    if (record.type === "目录") {
+      const newPath = record.path;
+      setCurrentPath(newPath);
+      localStorage.setItem("currentPath", newPath);
+      // TODO: 这里需要根据新路径加载对应目录的文件列表
+      // loadFileList(newPath);
+    } else {
+      // 处理文件点击逻辑
+      console.log("点击文件:", record.fileName);
+    }
+  };
+
+  // 处理路径变化
+  const handlePathChange = (newPath: string) => {
+    setCurrentPath(newPath);
+    // TODO: 这里需要根据新路径加载对应目录的文件列表
+    // loadFileList(newPath);
   };
 
   // 处理全选
@@ -94,7 +114,7 @@ function ContentMain() {
           />
           <div
             className="file-name-content"
-            onClick={() => handleFileClick(text)}
+            onClick={() => handleFileClick(record)}
           >
             {getFileIcon(record.type)}
             <span className="file-name-text">{text}</span>
@@ -142,9 +162,10 @@ function ContentMain() {
           </div>
         </div>
       </div>
+      <BreadcrumbNav onPathChange={handlePathChange} />
       <div className="table-header">
         <div className="left">全部文件</div>
-        <div className="right">已加载全部，共1个</div>
+        <div className="right">已加载全部，共{data.length}个</div>
       </div>
       <div className="table-container">
         <Table

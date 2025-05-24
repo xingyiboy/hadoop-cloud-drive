@@ -153,3 +153,17 @@
     }
   }
 }
+
+.breadcrumb-item {
+  &:hover {
+    color: #1890ff;
+  }
+
+  span {
+    transition: color 0.3s;
+
+    &:hover {
+      color: #1890ff;
+    }
+  }
+}
