@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-05-09 12:03:12
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-12 15:54:25
+ * @LastEditTime: 2025-05-24 17:33:18
  * @FilePath: \CloudDiskWeb\src\layout\component\HeaderMain.tsx
  */
 import { useNavigate } from "react-router-dom";
@@ -204,8 +204,6 @@ function HeaderMain() {
             </Dropdown>
             <div>|</div>
             <div>当前目录:</div>
-            <div>|</div>
-            <div>客户端下载</div>
             <Button shape="round" danger type="primary">
               会员中心
             </Button>

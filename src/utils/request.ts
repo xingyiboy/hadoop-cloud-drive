@@ -1,3 +1,9 @@
+/*
+ * @Date: 2025-04-28 17:45:53
+ * @LastEditors: xingyi && 2416820386@qq.com
+ * @LastEditTime: 2025-05-24 17:26:01
+ * @FilePath: \CloudDiskWeb\src\utils\request.ts
+ */
 // 封装 axios
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
@@ -5,7 +11,7 @@ import { getToken } from "@/utils/setToken";
 
 // axios 实例配置
 const _axios: AxiosInstance = axios.create({
-  baseURL: "http://113.45.31.128:6767",
+  baseURL: "http://localhost:48080",
   timeout: 30000,
 });
 

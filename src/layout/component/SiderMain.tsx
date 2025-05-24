@@ -18,7 +18,7 @@ const items2: MenuProps["items"] = [
   { key: "4", icon: "", label: "视频" },
   { key: "5", icon: "", label: "文档" },
   { key: "6", icon: "", label: "种子" },
-  { key: "7", icon: "", label: "更多" },
+  { key: "7", icon: "", label: "其他" },
   { key: "8", icon: React.createElement(ShareAltOutlined), label: "我的分享" },
   { key: "9", icon: React.createElement(RestOutlined), label: "回收站" },
 ];
