@@ -19,6 +19,7 @@ interface UploadStore {
   addTask: (task: UploadTask) => void;
   updateTask: (id: string, updates: Partial<UploadTask>) => void;
   removeTask: (id: string) => void;
+  clearTasks: () => void;
 }
 
 export const useUploadStore = create<UploadStore>((set) => ({
@@ -36,5 +37,9 @@ export const useUploadStore = create<UploadStore>((set) => ({
   removeTask: (id) =>
     set((state) => ({
       uploadTasks: state.uploadTasks.filter((task) => task.id !== id),
+    })),
+  clearTasks: () =>
+    set(() => ({
+      uploadTasks: [],
     })),
 }));

@@ -25,7 +25,7 @@ import CreateFolderModal from "./CreateFolderModal";
 import { FileType, FileTypeMap, getFileTypeByExt } from "../enums/FileTypeEnum";
 import { createFile, getFileList } from "@/api/file";
 import { FileInfo } from "@/types/file";
-import { useUploadStore } from "../store/uploadStore";
+import { useUploadStore } from "@/store/upload";
 
 const { Content } = Layout;
 
@@ -77,7 +77,12 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       });
       if (res.code === 0 && res.data) {
         const list = res.data.list || [];
-        setFileList(list);
+        // 转换 createTime 类型
+        const convertedList = list.map((item) => ({
+          ...item,
+          createTime: item.createTime.toString(),
+        }));
+        setFileList(convertedList);
         setPagination({
           ...pagination,
           current: page,
@@ -129,55 +134,66 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     // 生成任务ID并添加到上传队列
     const tasks = fileArray.map((file) => ({
       id: `${file.name}-${Date.now()}-${Math.random()}`,
-      file,
+      file: {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      },
+      status: "uploading" as const,
+      progress: 0,
     }));
 
     // 添加任务到上传队列
-    uploadStore.addTasks(
-      tasks.map((task) => ({
-        file: task.file,
-        id: task.id,
-        catalogue: currentPath,
-      }))
-    );
+    tasks.forEach((task) => {
+      uploadStore.addTask(task);
+    });
 
     message.success(`已添加 ${fileArray.length} 个文件到上传队列`);
 
     // 开始逐个上传文件
-    for (const task of tasks) {
+    for (const [index, file] of fileArray.entries()) {
+      const task = tasks[index];
       try {
-        uploadStore.updateTaskStatus(task.id, "uploading");
-        const fileType = getFileTypeByExt(task.file.name);
+        const fileType = getFileTypeByExt(file.name);
 
         // 创建 FormData
         const formData = new FormData();
-        formData.append("file", task.file);
-        formData.append("name", task.file.name);
+        formData.append("file", file);
+        formData.append("name", file.name);
         formData.append("type", fileType.toString());
         formData.append("catalogue", currentPath);
-        formData.append("size", (task.file.size / (1024 * 1024)).toFixed(2));
+        formData.append("size", (file.size / (1024 * 1024)).toFixed(2));
 
         // 上传文件
         const res = await createFile(formData, {
           onUploadProgress: (progressEvent: ProgressEvent) => {
-            const progress = (progressEvent.loaded / progressEvent.total) * 100;
-            uploadStore.updateTaskProgress(task.id, progress);
+            if (progressEvent.total) {
+              const progress = Math.round(
+                (progressEvent.loaded / progressEvent.total) * 100
+              );
+              uploadStore.updateTask(task.id, { progress });
+            }
           },
         });
 
         if (res.code === 0) {
-          uploadStore.updateTaskStatus(task.id, "completed");
+          uploadStore.updateTask(task.id, { status: "success" });
+          // 刷新文件列表
+          loadFileList();
         } else {
-          uploadStore.updateTaskStatus(task.id, "error", res.msg || "上传失败");
+          uploadStore.updateTask(task.id, {
+            status: "failed",
+            error: res.msg || "上传失败",
+          });
         }
       } catch (error) {
-        uploadStore.updateTaskStatus(task.id, "error", "上传失败");
+        uploadStore.updateTask(task.id, {
+          status: "failed",
+          error: "上传失败",
+        });
         console.error("Upload error:", error);
       }
     }
-
-    // 刷新文件列表
-    loadFileList();
   };
 
   // 处理新建文件夹
