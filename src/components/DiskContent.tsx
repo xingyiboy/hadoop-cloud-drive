@@ -159,14 +159,14 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         // 创建 FormData
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("name", file.name);
-        formData.append("type", fileType.toString());
+        formData.append("fileName", file.name);
+        formData.append("fileType", fileType.toString());
         formData.append("catalogue", currentPath);
-        formData.append("size", (file.size / (1024 * 1024)).toFixed(2));
+        formData.append("fileSize", (file.size / (1024 * 1024)).toFixed(2));
 
         // 上传文件
         const res = await createFile(formData, {
-          onUploadProgress: (progressEvent: ProgressEvent) => {
+          onUploadProgress: (progressEvent) => {
             if (progressEvent.total) {
               const progress = Math.round(
                 (progressEvent.loaded / progressEvent.total) * 100

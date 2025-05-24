@@ -6,7 +6,7 @@
  */
 // 封装 axios
 
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { message } from "antd";
 import { getToken } from "@/utils/setToken";
 
@@ -16,9 +16,9 @@ export interface ApiResponse<T = any> {
   msg?: string;
 }
 
-const instance = axios.create({
+const instance: AxiosInstance = axios.create({
   baseURL: "http://localhost:48080",
-  timeout: 30000,
+  timeout: 60000,
 });
 
 // 请求拦截器
@@ -35,6 +35,10 @@ instance.interceptors.request.use(
       if (token) {
         config.headers = config.headers || {};
         config.headers["Authorization"] = `Bearer ${token}`;
+      } else {
+        // 如果需要token但没有token，直接跳转到登录页
+        window.location.hash = "#/login";
+        return Promise.reject(new Error("请先登录"));
       }
     }
 
@@ -51,55 +55,42 @@ instance.interceptors.request.use(
 
 // 响应拦截器
 instance.interceptors.response.use(
-  (response) => {
+  (response: AxiosResponse<ApiResponse>) => {
     const res = response.data;
-    // code为0表示成功
-    if (res.code === 0) {
-      return res;
+    if (res.code === 401) {
+      // 未登录或token过期
+      window.location.hash = "#/login";
+      return Promise.reject(new Error("请先登录"));
     }
-    message.error(res.msg || "请求失败");
-    return Promise.reject(res);
+    if (res.code !== 0) {
+      message.error(res.msg || "请求失败");
+      return Promise.reject(new Error(res.msg || "请求失败"));
+    }
+    return res;
   },
   (error) => {
-    message.error(error?.response?.data?.msg || "网络错误");
+    if (error.response?.status === 401) {
+      // 未登录或token过期
+      window.location.hash = "#/login";
+      return Promise.reject(new Error("请先登录"));
+    }
+    message.error(error.message || "网络错误");
     return Promise.reject(error);
   }
 );
 
-type RequestMethod = "get" | "post" | "put" | "delete";
-
-function createRequest(method: RequestMethod) {
-  return async function <T = any>(
-    url: string,
-    data?: any
-  ): Promise<ApiResponse<T>> {
-    const config: AxiosRequestConfig = {
-      url,
-      method,
-    };
-
-    if (method === "get") {
-      config.params = data;
-    } else {
-      config.data = data;
-    }
-
-    const response = await instance(config);
-    return response as unknown as ApiResponse<T>;
-  };
-}
-
 const request = {
-  get: createRequest("get"),
-  post: createRequest("post"),
-  put: createRequest("put"),
-  delete: createRequest("delete"),
-  request: async function <T = any>(
-    config: AxiosRequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await instance(config);
-    return response as unknown as ApiResponse<T>;
-  },
+  get: <T = any>(url: string, config?: AxiosRequestConfig) =>
+    instance.get<any, ApiResponse<T>>(url, config),
+
+  post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
+    instance.post<any, ApiResponse<T>>(url, data, config),
+
+  put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
+    instance.put<any, ApiResponse<T>>(url, data, config),
+
+  delete: <T = any>(url: string, config?: AxiosRequestConfig) =>
+    instance.delete<any, ApiResponse<T>>(url, config),
 };
 
 export default request;

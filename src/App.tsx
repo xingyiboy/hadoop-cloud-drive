@@ -4,34 +4,26 @@
  * @LastEditTime: 2025-04-29 10:19:41
  * @FilePath: \CloudDiskWeb\src\App.tsx
  */
-import React, { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { Suspense } from "react";
+import { useRoutes } from "react-router-dom";
+import { ConfigProvider } from "antd";
+import zhCN from "antd/es/locale/zh_CN";
+import routes from "./routes";
 
-import MyRoute from "@/routes/index";
+// 路由组件
+const RouterElement: React.FC = () => {
+  const element = useRoutes(routes);
+  return element;
+};
 
-import { getToken } from "@/utils/setToken";
-
-function App() {
-  const location = useLocation(); // 返回当前路由对象
-  const navigate = useNavigate(); // 允许使用编程式导航
-
-  // 未登录或登录信息丢失时重新登录
-  useEffect(() => {
-    if (getToken()) {
-    } else if (location.pathname === "/register") {
-    } else if (location.pathname !== "/login") {
-      navigate("/login", { replace: true });
-    }
-  }, [location]);
-
+const App: React.FC = () => {
   return (
-    <div className="App">
-      {/* 动态导入的组件要用 Suspense 包裹 */}
-      <React.Suspense>
-        <MyRoute></MyRoute>
-      </React.Suspense>
-    </div>
+    <ConfigProvider locale={zhCN}>
+      <Suspense fallback={<div>加载中...</div>}>
+        <RouterElement />
+      </Suspense>
+    </ConfigProvider>
   );
-}
+};
 
 export default App;

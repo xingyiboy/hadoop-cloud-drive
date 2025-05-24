@@ -1,13 +1,19 @@
+/*
+ * @Date: 2025-05-24 18:34:17
+ * @LastEditors: xingyi && 2416820386@qq.com
+ * @LastEditTime: 2025-05-24 21:07:25
+ * @FilePath: \CloudDiskWeb\src\api\file.ts
+ */
 import request from "@/utils/request";
 import type { ApiResponse } from "@/utils/request";
 import { FileType } from "@/enums/FileTypeEnum";
+import type { AxiosProgressEvent, AxiosRequestConfig } from "axios";
 
 export interface FileInfo {
   id: number;
   name: string;
-  type: FileType;
-  size?: string;
-  catalogue: string;
+  type: number;
+  size: string;
   createTime: number;
 }
 
@@ -23,15 +29,25 @@ interface ProgressConfig {
   onUploadProgress?: (progressEvent: ProgressEvent) => void;
 }
 
-// 创建文件或目录
-export const createFile = (
-  data: CreateFileParams | FormData,
-  config?: ProgressConfig
-): Promise<ApiResponse> => {
-  return request.request({
-    url: "/admin-api/system/hadoop-file/create",
-    method: "POST",
-    data,
+export interface FileListParams {
+  catalogue?: string;
+  type?: number;
+  keyword?: string;
+  pageNo?: number;
+  pageSize?: number;
+}
+
+export interface FileListResponse {
+  list: FileInfo[];
+  total: number;
+}
+
+// 创建文件
+export const createFile = async (
+  data: FormData,
+  config?: AxiosRequestConfig
+) => {
+  return request.post("/admin-api/system/hadoop-file/create", data, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -40,14 +56,10 @@ export const createFile = (
 };
 
 // 获取文件列表
-export const getFileList = (params: {
-  catalogue?: string;
-  type?: FileType;
-  keyword?: string;
-  pageNo?: number;
-  pageSize?: number;
-}): Promise<ApiResponse<{ list: FileInfo[]; total: number }>> => {
-  return request.get("/admin-api/system/hadoop-file/list", params);
+export const getFileList = (params: FileListParams) => {
+  return request.get<FileListResponse>("/admin-api/system/hadoop-file/list", {
+    params,
+  });
 };
 
 // 删除文件或目录

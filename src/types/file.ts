@@ -6,18 +6,16 @@ export interface FileInfo {
   name: string;
   type: FileType;
   size?: string;
-  catalogue: string;
   createTime: string;
-  modifyDate?: string;
+  catalogue?: string;
 }
 
 // 创建文件请求参数
-export interface CreateFileRequest {
+export interface CreateFileParams {
   name: string;
   type: FileType;
-  catalogue: string;
+  catalogue?: string;
   size?: string;
-  file?: File;
 }
 
 // 文件列表请求参数

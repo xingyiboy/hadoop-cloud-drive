@@ -4,89 +4,108 @@
  * @LastEditTime: 2025-05-08 14:33:35
  * @FilePath: \CloudDiskWeb\src\routes\index.tsx
  */
-import React from "react";
-import { useRoutes, Navigate } from "react-router-dom";
-import { FileType } from "@/enums/FileTypeEnum";
-import DiskContent from "@/components/DiskContent";
-import UploadingContent from "@/components/UploadingContent";
-import DownloadingContent from "@/components/DownloadingContent";
+import React, { Suspense } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { getToken } from "@/utils/setToken";
 import LayoutApp from "@/layout";
 
-/**
- * React.lazy 懒加载
- * 使组件动态导入
- */
-const Login = React.lazy(() => import("@/views/login/index"));
-const Main = React.lazy(() => import("@/layout/index"));
-const Register = React.lazy(() => import("@/views/register/index"));
+const Login = React.lazy(() => import("@/views/login"));
+const Register = React.lazy(() => import("@/views/register"));
 
+// 路由守卫组件
+const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const token = getToken();
+  const location = useLocation();
+
+  if (
+    !token &&
+    location.pathname !== "/login" &&
+    location.pathname !== "/register"
+  ) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// 路由配置
 const routes = [
   {
+    path: "/login",
+    element: (
+      <Suspense fallback={<div>加载中...</div>}>
+        <Login />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/register",
+    element: (
+      <Suspense fallback={<div>加载中...</div>}>
+        <Register />
+      </Suspense>
+    ),
+  },
+  {
     path: "/",
-    element: <LayoutApp />,
+    element: (
+      <PrivateRoute>
+        <LayoutApp />
+      </PrivateRoute>
+    ),
     children: [
       {
-        path: "/",
-        element: <Navigate to="/all" />,
+        path: "",
+        element: <Navigate to="/all" replace />,
       },
       {
-        path: "/all",
-        element: <DiskContent fileType={undefined} />,
+        path: "all",
+        element: <LayoutApp />,
       },
       {
-        path: "/image",
-        element: <DiskContent fileType={FileType.IMAGE} />,
+        path: "image",
+        element: <LayoutApp />,
       },
       {
-        path: "/document",
-        element: <DiskContent fileType={FileType.DOCUMENT} />,
+        path: "doc",
+        element: <LayoutApp />,
       },
       {
-        path: "/video",
-        element: <DiskContent fileType={FileType.VIDEO} />,
+        path: "video",
+        element: <LayoutApp />,
       },
       {
-        path: "/music",
-        element: <DiskContent fileType={FileType.AUDIO} />,
+        path: "music",
+        element: <LayoutApp />,
       },
       {
-        path: "/other",
-        element: <DiskContent fileType={FileType.OTHER} />,
+        path: "other",
+        element: <LayoutApp />,
       },
       {
-        path: "/upload",
-        children: [
-          {
-            path: "",
-            element: <Navigate to="/upload/uploading" />,
-          },
-          {
-            path: ":status",
-            element: <UploadingContent />,
-          },
-        ],
+        path: "upload",
+        element: <LayoutApp />,
       },
       {
-        path: "/download",
-        children: [
-          {
-            path: "",
-            element: <Navigate to="/download/downloading" />,
-          },
-          {
-            path: ":status",
-            element: <DownloadingContent />,
-          },
-        ],
+        path: "upload/uploading",
+        element: <LayoutApp />,
+      },
+      {
+        path: "upload/success",
+        element: <LayoutApp />,
+      },
+      {
+        path: "upload/failed",
+        element: <LayoutApp />,
       },
     ],
   },
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
+  },
 ];
 
-function MyRoute() {
-  let element = useRoutes(routes);
-
-  return element;
-}
-
-export default MyRoute;
+export default routes;

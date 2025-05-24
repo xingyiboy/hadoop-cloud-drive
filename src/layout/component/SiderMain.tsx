@@ -101,12 +101,12 @@ const SiderMain: React.FC<SiderMainProps> = ({
       label: "正在上传",
     },
     {
-      key: "uploaded",
+      key: "success",
       icon: <CheckCircleOutlined />,
       label: "已上传",
     },
     {
-      key: "upload_failed",
+      key: "failed",
       icon: <CloseCircleOutlined />,
       label: "上传失败",
     },
@@ -149,40 +149,12 @@ const SiderMain: React.FC<SiderMainProps> = ({
 
   // 处理菜单点击
   const handleMenuClick = ({ key }: { key: string }) => {
-    if (activeTab === 1) {
-      // 网盘页面处理文件类型切换
-      switch (key) {
-        case "all":
-          onFileTypeChange?.(undefined);
-          navigate("/all");
-          break;
-        case "image":
-          onFileTypeChange?.(FileType.IMAGE);
-          navigate("/image");
-          break;
-        case "document":
-          onFileTypeChange?.(FileType.DOCUMENT);
-          navigate("/document");
-          break;
-        case "video":
-          onFileTypeChange?.(FileType.VIDEO);
-          navigate("/video");
-          break;
-        case "audio":
-          onFileTypeChange?.(FileType.AUDIO);
-          navigate("/music");
-          break;
-        case "other":
-          onFileTypeChange?.(FileType.OTHER);
-          navigate("/other");
-          break;
-      }
-    } else if (activeTab === 3) {
-      // 上传页面处理状态切换
+    if (key.startsWith("upload/") || key === "upload") {
+      navigate(`/${key}`);
+    } else if (["uploading", "success", "failed"].includes(key)) {
       navigate(`/upload/${key}`);
-    } else if (activeTab === 4) {
-      // 下载页面处理状态切换
-      navigate(`/download/${key}`);
+    } else {
+      navigate(`/${key}`);
     }
   };
 
