@@ -12,7 +12,11 @@ import { useState, useEffect } from "react";
 import "../style/content-main.scss";
 import BreadcrumbNav from "../../components/BreadcrumbNav";
 import CreateFolderModal from "../../components/CreateFolderModal";
-import { FileType, getFileTypeByExt } from "../../enums/FileTypeEnum";
+import {
+  FileType,
+  FileTypeMap,
+  getFileTypeByExt,
+} from "../../enums/FileTypeEnum";
 import { createFile, getFileList } from "@/api/file";
 import { FileInfo } from "@/types/file";
 
@@ -144,10 +148,22 @@ function ContentMain() {
 
   // 获取文件图标
   const getFileIcon = (type: FileType) => {
-    if (type === FileType.DIRECTORY) {
-      return <span className="folder-icon">📁</span>;
+    switch (type) {
+      case FileType.DIRECTORY:
+        return <span className="folder-icon">📁</span>;
+      case FileType.IMAGE:
+        return <span className="image-icon">🖼️</span>;
+      case FileType.AUDIO:
+        return <span className="audio-icon">🎵</span>;
+      case FileType.VIDEO:
+        return <span className="video-icon">🎬</span>;
+      case FileType.DOCUMENT:
+        return <span className="document-icon">📄</span>;
+      case FileType.PLANT:
+        return <span className="plant-icon">🌱</span>;
+      default:
+        return <span className="file-icon">📎</span>;
     }
-    return <span className="file-icon">📄</span>;
   };
 
   // 表格列定义
@@ -193,14 +209,13 @@ function ContentMain() {
       title: "类型",
       dataIndex: "type",
       key: "type",
-      render: (type: FileType) =>
-        type === FileType.DIRECTORY ? "目录" : "文件",
+      render: (type: FileType) => FileTypeMap[type],
     },
     {
       title: "大小",
       dataIndex: "size",
       key: "size",
-      render: (size: string | null) => size || "-",
+      render: (size: string | null) => (size ? `${size} MB` : "-"),
     },
     {
       title: "修改日期",
