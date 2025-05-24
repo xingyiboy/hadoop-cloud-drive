@@ -26,6 +26,7 @@ import { FileType, FileTypeMap, getFileTypeByExt } from "../enums/FileTypeEnum";
 import { createFile, getFileList } from "@/api/file";
 import { FileInfo } from "@/types/file";
 import { useUploadStore } from "@/store/upload";
+import dayjs from "dayjs";
 
 const { Content } = Layout;
 
@@ -38,6 +39,15 @@ interface ApiResponse<T> {
   data: T;
   msg?: string;
 }
+
+// 在组件外部定义格式化函数
+const formatDateTime = (timestamp: number): string => {
+  if (!timestamp) return "-";
+  // 如果是13位时间戳，需要除以1000转换为正确的时间
+  const normalizedTimestamp =
+    String(timestamp).length === 13 ? timestamp / 1000 : timestamp;
+  return dayjs(normalizedTimestamp * 1000).format("YYYY-MM-DD HH:mm:ss");
+};
 
 const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 选中的文件keys
@@ -331,7 +341,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       title: "修改日期",
       dataIndex: "createTime",
       key: "createTime",
-      render: (time: number) => new Date(time).toLocaleString(),
+      render: (time: number) => formatDateTime(time),
     },
   ];
 
