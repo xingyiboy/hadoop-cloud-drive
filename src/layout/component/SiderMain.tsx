@@ -20,7 +20,7 @@ import {
   CloseCircleOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
-import React from "react";
+import React, { useState } from "react";
 import "../style/sider-main.scss";
 import { FileType } from "@/enums/FileTypeEnum";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -38,11 +38,20 @@ const SiderMain: React.FC<SiderMainProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [selectedMenuKey, setSelectedMenuKey] = useState<string>("all");
 
   // 获取当前选中的菜单项
   const getSelectedKey = () => {
+    const diskKeys = ["all", "image", "document", "video", "audio", "other"];
     const path = location.pathname.split("/");
-    return path[path.length - 1];
+    const currentKey = path[path.length - 1];
+
+    // 如果是网盘页面的菜单项，使用状态中保存的选中项
+    if (activeTab === 1 && diskKeys.includes(selectedMenuKey)) {
+      return selectedMenuKey;
+    }
+
+    return currentKey;
   };
 
   // 网盘页面的菜单项
@@ -152,6 +161,7 @@ const SiderMain: React.FC<SiderMainProps> = ({
     // 网盘页面的特殊处理
     const diskKeys = ["all", "image", "document", "video", "audio", "other"];
     if (diskKeys.includes(key)) {
+      setSelectedMenuKey(key);
       if (onFileTypeChange) {
         if (key === "all") {
           onFileTypeChange(undefined);
