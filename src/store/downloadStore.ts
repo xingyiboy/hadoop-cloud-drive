@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { DownloadStore, DownloadTask } from "@/types/download";
 
 interface DownloadFile {
   name: string;
@@ -15,9 +16,13 @@ interface DownloadTask {
 
 interface DownloadStore {
   tasks: DownloadTask[];
-  addTask: (task: DownloadTask) => void;
-  updateTask: (id: string, updates: Partial<DownloadTask>) => void;
-  removeTask: (id: string) => void;
+  addTasks: (newTasks: DownloadTask[]) => void;
+  updateTaskStatus: (
+    taskId: string,
+    status: "pending" | "downloading" | "downloaded" | "failed",
+    error?: string
+  ) => void;
+  updateTaskProgress: (taskId: string, progress: number) => void;
   clearTasksByStatus: (
     status?: "downloading" | "downloaded" | "failed"
   ) => void;
@@ -25,19 +30,21 @@ interface DownloadStore {
 
 export const useDownloadStore = create<DownloadStore>((set) => ({
   tasks: [],
-  addTask: (task) =>
+  addTasks: (newTasks) =>
     set((state) => ({
-      tasks: [...state.tasks, task],
+      tasks: [...state.tasks, ...newTasks],
     })),
-  updateTask: (id, updates) =>
+  updateTaskStatus: (taskId, status, error) =>
     set((state) => ({
       tasks: state.tasks.map((task) =>
-        task.id === id ? { ...task, ...updates } : task
+        task.id === taskId ? { ...task, status, error: error || null } : task
       ),
     })),
-  removeTask: (id) =>
+  updateTaskProgress: (taskId, progress) =>
     set((state) => ({
-      tasks: state.tasks.filter((task) => task.id !== id),
+      tasks: state.tasks.map((task) =>
+        task.id === taskId ? { ...task, progress } : task
+      ),
     })),
   clearTasksByStatus: (status) =>
     set((state) => ({

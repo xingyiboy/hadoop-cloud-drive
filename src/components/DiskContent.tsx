@@ -25,9 +25,10 @@ import "../layout/style/content-main.scss";
 import BreadcrumbNav from "./BreadcrumbNav";
 import CreateFolderModal from "./CreateFolderModal";
 import { FileType, FileTypeMap, getFileTypeByExt } from "../enums/FileTypeEnum";
-import { createFile, getFileList } from "@/api/file";
+import { createFile, getFileList, downloadFile } from "@/api/file";
 import { FileInfo } from "@/types/file";
 import { useUploadStore } from "@/store/uploadStore";
+import { useDownloadStore } from "@/store/downloadStore";
 import dayjs from "dayjs";
 
 const { Content } = Layout;
@@ -324,13 +325,100 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   };
 
   // 处理批量下载
-  const handleBatchDownload = () => {
+  const handleBatchDownload = async () => {
     if (selectedRowKeys.length === 0) {
       message.warning("请选择要下载的文件");
       return;
     }
-    // TODO: 实现批量下载逻辑
-    message.info(`准备下载 ${selectedRowKeys.length} 个文件`);
+
+    const downloadStore = useDownloadStore.getState();
+    const selectedFiles = fileList.filter((file) =>
+      selectedRowKeys.includes(file.id.toString())
+    );
+
+    // 生成下载任务
+    const tasks = selectedFiles.map((file) => ({
+      id: `${file.name}-${Date.now()}-${Math.random()}`,
+      file: {
+        name: file.name,
+        size: parseFloat(file.size || "0"),
+        type: file.type,
+      },
+      status: "pending" as const,
+      progress: 0,
+      error: undefined,
+    }));
+
+    // 添加任务到下载队列
+    downloadStore.addTasks(tasks);
+    message.success(`已添加 ${tasks.length} 个文件到下载队列`);
+
+    // 开始逐个下载文件
+    for (const [index, file] of selectedFiles.entries()) {
+      const task = tasks[index];
+      try {
+        // 更新任务状态为下载中
+        downloadStore.updateTaskStatus(task.id, "downloading");
+
+        // 调用下载接口
+        const response = await downloadFile({
+          fileId: file.id.toString(),
+          onDownloadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const progress = Math.round(
+                (progressEvent.loaded / progressEvent.total) * 100
+              );
+              downloadStore.updateTaskProgress(task.id, progress);
+            }
+          },
+        });
+
+        // 检查响应数据
+        if (!response.data) {
+          throw new Error("下载失败：未收到文件数据");
+        }
+
+        // 获取文件名
+        let filename = file.name;
+        const contentDisposition = response.headers["content-disposition"];
+        if (contentDisposition) {
+          const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
+          if (matches && matches[1]) {
+            filename = decodeURIComponent(matches[1]);
+          }
+        }
+
+        // 创建下载链接并触发下载
+        const url = window.URL.createObjectURL(response.data);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+
+        // 清理
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+
+        // 更新任务状态为已完成
+        downloadStore.updateTaskStatus(task.id, "downloaded");
+
+        // 等待一小段时间再开始下一个文件的下载
+        if (index < selectedFiles.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      } catch (error) {
+        console.error("Download error:", error);
+        downloadStore.updateTaskStatus(
+          task.id,
+          "failed",
+          error instanceof Error ? error.message : "下载失败"
+        );
+      }
+    }
   };
 
   // 处理批量分享

@@ -7,7 +7,11 @@
 import request from "@/utils/request";
 import type { ApiResponse } from "@/utils/request";
 import { FileType } from "@/enums/FileTypeEnum";
-import type { AxiosProgressEvent, AxiosRequestConfig } from "axios";
+import type {
+  AxiosRequestConfig,
+  AxiosResponse,
+  AxiosProgressEvent,
+} from "axios";
 
 export interface FileInfo {
   id: number;
@@ -42,6 +46,14 @@ export interface FileListParams {
 export interface FileListResponse {
   list: FileInfo[];
   total: number;
+}
+
+interface DownloadOptions {
+  fileId: string;
+  onDownloadProgress?: (progressEvent: {
+    loaded: number;
+    total?: number;
+  }) => void;
 }
 
 // 创建文件
@@ -90,3 +102,41 @@ export const renameFile = (
     newName,
   });
 };
+
+export async function downloadFile(params: {
+  fileId: string;
+  onDownloadProgress?: (progressEvent: any) => void;
+}) {
+  // 使用 fetch API 处理文件下载
+  const response = await fetch(
+    `/admin-api/system/hadoop-file/download/${params.fileId}`,
+    {
+      method: "GET",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`下载失败: ${response.status} ${response.statusText}`);
+  }
+
+  // 获取文件名
+  const contentDisposition = response.headers.get("content-disposition");
+  let filename = "";
+  if (contentDisposition) {
+    const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
+    if (matches && matches[1]) {
+      filename = decodeURIComponent(matches[1]);
+    }
+  }
+
+  // 获取文件内容
+  const blob = await response.blob();
+
+  return {
+    data: blob,
+    headers: {
+      "content-disposition": contentDisposition,
+      "content-type": response.headers.get("content-type"),
+    },
+  };
+}
