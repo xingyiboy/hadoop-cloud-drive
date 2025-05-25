@@ -5,7 +5,7 @@ export interface UploadTask {
   id: string;
   file: File;
   progress: number;
-  status: "pending" | "uploading" | "completed" | "error";
+  status: "uploading" | "success" | "failed";
   catalogue: string;
   createTime: number;
   error?: string;
@@ -54,7 +54,7 @@ export const useUploadStore = create<UploadStore>((set, get) => ({
           id: task.id,
           file: task.file,
           progress: 0,
-          status: "pending" as const,
+          status: "uploading" as const,
           catalogue: task.catalogue,
           createTime: Date.now(),
         })),

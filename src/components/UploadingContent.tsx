@@ -13,36 +13,33 @@ const UploadingContent: React.FC = () => {
 
   const getStatusTitle = (path: string): string => {
     if (path.includes("uploading")) return "正在上传";
-    if (path.includes("completed")) return "上传成功";
-    if (path.includes("error")) return "上传失败";
+    if (path.includes("success")) return "已上传";
+    if (path.includes("failed")) return "上传失败";
     return "全部上传";
   };
 
   const getFilteredTasks = () => {
     if (location.pathname.includes("uploading")) {
-      return tasks.filter(
-        (task) => task.status === "uploading" || task.status === "pending"
-      );
+      return tasks.filter((task) => task.status === "uploading");
     }
-    if (location.pathname.includes("completed")) {
-      return tasks.filter((task) => task.status === "completed");
+    if (location.pathname.includes("success")) {
+      return tasks.filter((task) => task.status === "success");
     }
-    if (location.pathname.includes("error")) {
-      return tasks.filter((task) => task.status === "error");
+    if (location.pathname.includes("failed")) {
+      return tasks.filter((task) => task.status === "failed");
     }
     return tasks;
   };
 
   const getTaskStatusStyle = (
-    status: "pending" | "uploading" | "completed" | "error"
+    status: "uploading" | "success" | "failed"
   ): "success" | "danger" | undefined => {
     switch (status) {
-      case "pending":
       case "uploading":
         return undefined;
-      case "completed":
+      case "success":
         return "success";
-      case "error":
+      case "failed":
         return "danger";
       default:
         return undefined;
@@ -50,16 +47,14 @@ const UploadingContent: React.FC = () => {
   };
 
   const getStatusText = (
-    status: "pending" | "uploading" | "completed" | "error"
+    status: "uploading" | "success" | "failed"
   ): string => {
     switch (status) {
-      case "pending":
-        return "等待上传";
       case "uploading":
         return "正在上传";
-      case "completed":
+      case "success":
         return "上传完成";
-      case "error":
+      case "failed":
         return "上传失败";
       default:
         return "";
@@ -86,11 +81,8 @@ const UploadingContent: React.FC = () => {
                     {formatFileSize(task.file.size)}
                   </Text>
                 </div>
-                {task.status === "uploading" || task.status === "pending" ? (
-                  <Progress
-                    percent={task.progress}
-                    status={task.status === "pending" ? "normal" : "active"}
-                  />
+                {task.status === "uploading" ? (
+                  <Progress percent={task.progress} status="active" />
                 ) : (
                   <Text type={getTaskStatusStyle(task.status)}>
                     {getStatusText(task.status)}

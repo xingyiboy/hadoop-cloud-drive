@@ -186,14 +186,18 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         });
 
         if (res.code === 0) {
-          uploadStore.updateTaskStatus(task.id, "completed");
+          uploadStore.updateTaskStatus(task.id, "success");
           // 刷新文件列表
           loadFileList();
         } else {
-          uploadStore.updateTaskStatus(task.id, "error", res.msg || "上传失败");
+          uploadStore.updateTaskStatus(
+            task.id,
+            "failed",
+            res.msg || "上传失败"
+          );
         }
       } catch (error) {
-        uploadStore.updateTaskStatus(task.id, "error", "上传失败");
+        uploadStore.updateTaskStatus(task.id, "failed", "上传失败");
         console.error("Upload error:", error);
       }
     }
