@@ -457,7 +457,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   const columns = [
     {
       title: (
-        <div className="file-name-header">
+        <div className="file-name-header" onClick={(e) => e.stopPropagation()}>
           <Checkbox
             checked={
               fileList.length > 0 && selectedRowKeys.length === fileList.length
@@ -466,7 +466,10 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               selectedRowKeys.length > 0 &&
               selectedRowKeys.length < fileList.length
             }
-            onChange={(e) => handleSelectAll(e.target.checked)}
+            onChange={(e) => {
+              e.stopPropagation();
+              handleSelectAll(e.target.checked);
+            }}
           />
           <span>文件名</span>
         </div>
@@ -474,6 +477,18 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       dataIndex: "name",
       key: "name",
       sorter: true,
+      onHeaderCell: () => ({
+        onClick: (e: React.MouseEvent) => {
+          // 如果点击的是 Checkbox 或其容器，不触发排序
+          if (
+            e.target instanceof HTMLElement &&
+            (e.target.closest(".ant-checkbox-wrapper") ||
+              e.target.closest(".ant-checkbox"))
+          ) {
+            e.stopPropagation();
+          }
+        },
+      }),
       render: (text: string, record: FileInfo) => (
         <div className="file-name-cell">
           <Checkbox
