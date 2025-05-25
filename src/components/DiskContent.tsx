@@ -168,10 +168,10 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         // 创建 FormData
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("fileName", file.name);
-        formData.append("fileType", fileType.toString());
+        formData.append("name", file.name);
+        formData.append("type", fileType.toString());
         formData.append("catalogue", currentPath);
-        formData.append("fileSize", (file.size / (1024 * 1024)).toFixed(2));
+        formData.append("size", (file.size / (1024 * 1024)).toFixed(2));
 
         // 上传文件
         const res = await createFile(formData, {
@@ -374,8 +374,6 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           >
             新建文件夹
           </Button>
-          <Button icon={<CloudDownloadOutlined />}>离线下载</Button>
-          <Button icon={<SettingOutlined />}>我的设备</Button>
         </div>
         <div className="right-search">
           <Input
