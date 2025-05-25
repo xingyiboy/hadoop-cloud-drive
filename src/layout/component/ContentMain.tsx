@@ -29,7 +29,7 @@ const ContentMain: React.FC<ContentMainProps> = ({ fileType, activeTab }) => {
     }
   };
 
-  return <>{renderContent()}</>;
+  return <Content className="content-main">{renderContent()}</Content>;
 };
 
 export default ContentMain;

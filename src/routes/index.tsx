@@ -100,6 +100,18 @@ const routes = [
         path: "upload/failed",
         element: <LayoutApp />,
       },
+      {
+        path: "download/downloading",
+        element: <LayoutApp />,
+      },
+      {
+        path: "download/downloaded",
+        element: <LayoutApp />,
+      },
+      {
+        path: "download/failed",
+        element: <LayoutApp />,
+      },
     ],
   },
   {

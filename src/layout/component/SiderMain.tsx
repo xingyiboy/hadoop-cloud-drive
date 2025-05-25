@@ -43,15 +43,19 @@ const SiderMain: React.FC<SiderMainProps> = ({
   // 获取当前选中的菜单项
   const getSelectedKey = () => {
     const diskKeys = ["all", "image", "document", "video", "audio", "other"];
-    const path = location.pathname.split("/");
-    const currentKey = path[path.length - 1];
+    const path = location.pathname;
 
     // 如果是网盘页面的菜单项，使用状态中保存的选中项
     if (activeTab === 1 && diskKeys.includes(selectedMenuKey)) {
       return selectedMenuKey;
     }
 
-    return currentKey;
+    // 如果是上传或下载页面，返回完整的路径key
+    if (path.startsWith("/upload/") || path.startsWith("/download/")) {
+      return path.substring(1); // 去掉开头的斜杠
+    }
+
+    return path.substring(1);
   };
 
   // 网盘页面的菜单项
@@ -105,17 +109,17 @@ const SiderMain: React.FC<SiderMainProps> = ({
   // 上传页面的菜单项
   const uploadMenuItems = [
     {
-      key: "uploading",
+      key: "upload/uploading",
       icon: <CloudUploadOutlined />,
       label: "正在上传",
     },
     {
-      key: "success",
+      key: "upload/success",
       icon: <CheckCircleOutlined />,
       label: "已上传",
     },
     {
-      key: "failed",
+      key: "upload/failed",
       icon: <CloseCircleOutlined />,
       label: "上传失败",
     },
@@ -124,17 +128,17 @@ const SiderMain: React.FC<SiderMainProps> = ({
   // 下载页面的菜单项
   const downloadMenuItems = [
     {
-      key: "downloading",
+      key: "download/downloading",
       icon: <CloudDownloadOutlined />,
       label: "正在下载",
     },
     {
-      key: "downloaded",
+      key: "download/downloaded",
       icon: <CheckCircleOutlined />,
       label: "已下载",
     },
     {
-      key: "download_failed",
+      key: "download/failed",
       icon: <CloseCircleOutlined />,
       label: "下载失败",
     },
@@ -175,13 +179,7 @@ const SiderMain: React.FC<SiderMainProps> = ({
     }
 
     // 其他页面的正常跳转处理
-    if (key.startsWith("upload/") || key === "upload") {
-      navigate(`/${key}`);
-    } else if (["uploading", "success", "failed"].includes(key)) {
-      navigate(`/upload/${key}`);
-    } else {
-      navigate(`/${key}`);
-    }
+    navigate(`/${key}`);
   };
 
   return (

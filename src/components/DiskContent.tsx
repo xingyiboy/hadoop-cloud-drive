@@ -90,7 +90,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       const res = await getFileList({
         catalogue: type === undefined ? currentPath : undefined,
         type,
-        keyword: searchKeyword,
+        name: searchKeyword,
         pageNo: page,
         pageSize: pagination.pageSize,
         sortField: sortState.field,
