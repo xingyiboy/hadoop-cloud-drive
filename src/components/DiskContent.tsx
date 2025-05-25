@@ -86,7 +86,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 加载文件列表
   const loadFileList = async (
     page = 1,
-    type: FileType | undefined = undefined
+    type: FileType | undefined = undefined,
+    size: number = pagination.pageSize
   ) => {
     try {
       setLoading(true);
@@ -95,7 +96,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         type,
         name: searchKeyword,
         pageNo: page,
-        pageSize: pagination.pageSize,
+        pageSize: size,
         sortField: sortState.field,
         sortOrder: sortState.order,
       });
@@ -123,6 +124,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         setPagination({
           ...pagination,
           current: page,
+          pageSize: size,
           total: res.data.total || 0,
         });
       } else {
@@ -130,6 +132,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         setPagination({
           ...pagination,
           current: 1,
+          pageSize: size,
           total: 0,
         });
         message.error(res.msg || "获取文件列表失败");
@@ -139,6 +142,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       setPagination({
         ...pagination,
         current: 1,
+        pageSize: size,
         total: 0,
       });
       message.error("获取文件列表失败");
@@ -164,9 +168,13 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   };
 
   // 处理分页变化
-  const handlePageChange = (page: number, pageSize?: number) => {
-    setPagination({ ...pagination, current: page, pageSize: pageSize || 10 });
-    loadFileList(page, fileType);
+  const handlePageChange = (page: number, size: number) => {
+    loadFileList(page, fileType, size);
+  };
+
+  // 处理每页条数变化
+  const handlePageSizeChange = (_: number, size: number) => {
+    loadFileList(1, fileType, size);
   };
 
   // 处理文件上传
@@ -626,6 +634,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           total={pagination.total}
           pageSize={pagination.pageSize}
           onChange={handlePageChange}
+          onShowSizeChange={handlePageSizeChange}
           showSizeChanger
           showQuickJumper
           showTotal={(total) => `共 ${total} 条`}
