@@ -149,6 +149,22 @@ const SiderMain: React.FC<SiderMainProps> = ({
 
   // 处理菜单点击
   const handleMenuClick = ({ key }: { key: string }) => {
+    // 网盘页面的特殊处理
+    const diskKeys = ["all", "image", "document", "video", "audio", "other"];
+    if (diskKeys.includes(key)) {
+      if (onFileTypeChange) {
+        if (key === "all") {
+          onFileTypeChange(undefined);
+        } else {
+          onFileTypeChange(
+            FileType[key.toUpperCase() as keyof typeof FileType]
+          );
+        }
+      }
+      return;
+    }
+
+    // 其他页面的正常跳转处理
     if (key.startsWith("upload/") || key === "upload") {
       navigate(`/${key}`);
     } else if (["uploading", "success", "failed"].includes(key)) {

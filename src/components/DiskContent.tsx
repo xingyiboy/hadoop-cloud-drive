@@ -209,11 +209,12 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 处理新建文件夹
   const handleCreateFolder = async (values: { name: string }) => {
     try {
-      const res = await createFile({
-        name: values.name,
-        type: FileType.DIRECTORY,
-        catalogue: currentPath,
-      });
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("type", FileType.DIRECTORY.toString());
+      formData.append("catalogue", currentPath);
+
+      const res = await createFile(formData);
 
       if (res.code === 0) {
         message.success("文件夹创建成功");
@@ -359,6 +360,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               }
               return false;
             }}
+            disabled={fileType !== undefined}
           >
             <Button
               type="primary"
