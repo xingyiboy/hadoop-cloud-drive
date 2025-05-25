@@ -6,10 +6,20 @@ export interface DownloadFile {
   type: number;
 }
 
+export type DownloadStatus =
+  | "pending"
+  | "downloading"
+  | "downloaded"
+  | "failed";
+
 export interface DownloadTask {
   id: string;
-  file: DownloadFile;
-  status: "downloading" | "downloaded" | "failed";
+  file: {
+    name: string;
+    size: number;
+    type: number;
+  };
+  status: DownloadStatus;
   progress: number;
   error?: string;
 }
@@ -17,11 +27,11 @@ export interface DownloadTask {
 export interface DownloadStore {
   tasks: DownloadTask[];
   addTasks: (tasks: DownloadTask[]) => void;
+  updateTaskProgress: (taskId: string, progress: number) => void;
   updateTaskStatus: (
     taskId: string,
-    status: DownloadTask["status"],
+    status: DownloadStatus,
     error?: string
   ) => void;
-  updateTaskProgress: (taskId: string, progress: number) => void;
-  clearTasksByStatus: (status?: DownloadTask["status"]) => void;
+  clearTasksByStatus: (status?: DownloadStatus) => void;
 }

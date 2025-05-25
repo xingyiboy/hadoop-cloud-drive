@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DownloadTask } from "@/types/download";
+import { DownloadTask, DownloadStatus } from "../types/download";
 
 interface DownloadStore {
   tasks: DownloadTask[];
@@ -8,12 +8,10 @@ interface DownloadStore {
   updateTaskProgress: (taskId: string, progress: number) => void;
   updateTaskStatus: (
     taskId: string,
-    status: "downloading" | "downloaded" | "failed",
+    status: DownloadStatus,
     error?: string
   ) => void;
-  clearTasksByStatus: (
-    status?: "downloading" | "downloaded" | "failed"
-  ) => void;
+  clearTasksByStatus: (status?: DownloadStatus) => void;
   initTasks: () => void;
 }
 

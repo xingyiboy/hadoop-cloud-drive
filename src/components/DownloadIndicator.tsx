@@ -10,13 +10,20 @@ const DownloadIndicator: React.FC = () => {
   const tasks = useDownloadStore((state: DownloadStore) => state.tasks);
   const navigate = useNavigate();
 
-  const { downloadingCount, totalCount } = useMemo(() => {
+  const { downloadingCount, pendingCount, totalCount } = useMemo(() => {
     const downloadingCount = tasks.filter(
       (task: DownloadTask) => task.status === "downloading"
     ).length;
-    const totalCount = tasks.length;
+    const pendingCount = tasks.filter(
+      (task: DownloadTask) => task.status === "pending"
+    ).length;
+    const totalCount = tasks.filter(
+      (task: DownloadTask) =>
+        task.status === "downloading" || task.status === "pending"
+    ).length;
     return {
       downloadingCount,
+      pendingCount,
       totalCount,
     };
   }, [tasks]);
@@ -24,6 +31,12 @@ const DownloadIndicator: React.FC = () => {
   if (totalCount === 0) {
     return null;
   }
+
+  const getStatusText = () => {
+    if (downloadingCount > 0) return "正在下载";
+    if (pendingCount > 0) return "等待下载";
+    return "下载管理";
+  };
 
   return (
     <div className="download-indicator">
@@ -39,7 +52,7 @@ const DownloadIndicator: React.FC = () => {
             backgroundColor: downloadingCount > 0 ? "#1890ff" : "#faad14",
           }}
         >
-          {downloadingCount > 0 ? "正在下载" : "等待下载"}
+          {getStatusText()}
         </Badge>
       </Button>
     </div>

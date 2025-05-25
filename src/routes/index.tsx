@@ -103,15 +103,27 @@ const routes = [
       },
       {
         path: "download/downloading",
-        element: <DownloadingContent />,
+        element: (
+          <Suspense fallback={<div>加载中...</div>}>
+            <DownloadingContent />
+          </Suspense>
+        ),
       },
       {
         path: "download/downloaded",
-        element: <DownloadingContent />,
+        element: (
+          <Suspense fallback={<div>加载中...</div>}>
+            <DownloadingContent />
+          </Suspense>
+        ),
       },
       {
         path: "download/failed",
-        element: <DownloadingContent />,
+        element: (
+          <Suspense fallback={<div>加载中...</div>}>
+            <DownloadingContent />
+          </Suspense>
+        ),
       },
     ],
   },

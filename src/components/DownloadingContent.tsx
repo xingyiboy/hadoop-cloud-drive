@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { useDownloadStore } from "../store/downloadStore";
 import { formatFileSize } from "@/utils/format";
 import { DeleteOutlined } from "@ant-design/icons";
-import { DownloadStore, DownloadTask } from "../types/download";
+import { DownloadStore, DownloadTask, DownloadStatus } from "../types/download";
 import "./DownloadingContent.scss";
 
 const { Title, Text } = Typography;
@@ -18,26 +18,28 @@ const DownloadingContent: React.FC = () => {
   );
 
   const getStatusTitle = (path: string): string => {
-    if (path === "/downloading") return "正在下载";
-    if (path === "/downloaded") return "已下载";
-    if (path === "/failed") return "下载失败";
+    if (path.includes("/download/downloading")) return "下载管理";
+    if (path.includes("/download/downloaded")) return "已下载";
+    if (path.includes("/download/failed")) return "下载失败";
     return "全部下载";
   };
 
-  const getCurrentStatus = ():
-    | "downloading"
-    | "downloaded"
-    | "failed"
-    | undefined => {
+  const getCurrentStatus = (): DownloadStatus | undefined => {
     const path = location.pathname;
-    if (path === "/downloading") return "downloading";
-    if (path === "/downloaded") return "downloaded";
-    if (path === "/failed") return "failed";
+    if (path.includes("/download/downloading")) return "downloading";
+    if (path.includes("/download/downloaded")) return "downloaded";
+    if (path.includes("/download/failed")) return "failed";
     return undefined;
   };
 
   const getFilteredTasks = () => {
     const status = getCurrentStatus();
+    if (status === "downloading") {
+      return tasks.filter(
+        (task: DownloadTask) =>
+          task.status === "downloading" || task.status === "pending"
+      );
+    }
     if (status) {
       return tasks.filter((task: DownloadTask) => task.status === status);
     }
@@ -45,9 +47,11 @@ const DownloadingContent: React.FC = () => {
   };
 
   const getTaskStatusStyle = (
-    status: "downloading" | "downloaded" | "failed"
-  ): "success" | "danger" | undefined => {
+    status: DownloadStatus
+  ): "warning" | "success" | "danger" | undefined => {
     switch (status) {
+      case "pending":
+        return "warning";
       case "downloading":
         return undefined;
       case "downloaded":
@@ -59,10 +63,10 @@ const DownloadingContent: React.FC = () => {
     }
   };
 
-  const getStatusText = (
-    status: "downloading" | "downloaded" | "failed"
-  ): string => {
+  const getStatusText = (status: DownloadStatus): string => {
     switch (status) {
+      case "pending":
+        return "等待下载";
       case "downloading":
         return "正在下载";
       case "downloaded":
@@ -123,6 +127,8 @@ const DownloadingContent: React.FC = () => {
                   </div>
                   {task.status === "downloading" ? (
                     <Progress percent={task.progress} status="active" />
+                  ) : task.status === "pending" ? (
+                    <Text type="warning">等待下载</Text>
                   ) : (
                     <Text type={getTaskStatusStyle(task.status)}>
                       {getStatusText(task.status)}
