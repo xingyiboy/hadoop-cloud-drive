@@ -35,6 +35,8 @@ export interface FileListParams {
   keyword?: string;
   pageNo?: number;
   pageSize?: number;
+  sortField?: string;
+  sortOrder?: "ascend" | "descend" | null;
 }
 
 export interface FileListResponse {

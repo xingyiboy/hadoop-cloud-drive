@@ -9,6 +9,7 @@ import {
   Pagination,
 } from "antd";
 import type { RcFile } from "antd/lib/upload";
+import type { SorterResult } from "antd/lib/table/interface";
 import {
   UploadOutlined,
   FolderAddOutlined,
@@ -70,6 +71,14 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     pageSize: 10,
     total: 0,
   });
+  // 排序状态
+  const [sortState, setSortState] = useState<{
+    field: string | null;
+    order: "ascend" | "descend" | null;
+  }>({
+    field: null,
+    order: null,
+  });
 
   // 加载文件列表
   const loadFileList = async (
@@ -84,14 +93,29 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         keyword: searchKeyword,
         pageNo: page,
         pageSize: pagination.pageSize,
+        sortField: sortState.field,
+        sortOrder: sortState.order,
       });
       if (res.code === 0 && res.data) {
         const list = res.data.list || [];
         // 转换 createTime 类型
-        const convertedList = list.map((item) => ({
+        let convertedList = list.map((item) => ({
           ...item,
           createTime: item.createTime.toString(),
         }));
+
+        // 如果没有指定排序，使用默认排序：文件夹在前，按名称排序
+        if (!sortState.field) {
+          convertedList = convertedList.sort((a, b) => {
+            // 首先按类型排序（文件夹在前）
+            if (a.type !== b.type) {
+              return b.type === FileType.DIRECTORY ? 1 : -1;
+            }
+            // 然后按名称排序
+            return a.name.localeCompare(b.name);
+          });
+        }
+
         setFileList(convertedList);
         setPagination({
           ...pagination,
@@ -284,6 +308,20 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
+  // 处理表格排序变化
+  const handleTableChange = (
+    _: any,
+    __: any,
+    sorter: SorterResult<FileInfo> | SorterResult<FileInfo>[]
+  ) => {
+    const singleSorter = Array.isArray(sorter) ? sorter[0] : sorter;
+    setSortState({
+      field: singleSorter.field as string,
+      order: singleSorter.order as "ascend" | "descend" | null,
+    });
+    loadFileList(pagination.current, fileType);
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -304,6 +342,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       ),
       dataIndex: "name",
       key: "name",
+      sorter: true,
       render: (text: string, record: FileInfo) => (
         <div className="file-name-cell">
           <Checkbox
@@ -333,12 +372,14 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       title: "大小",
       dataIndex: "size",
       key: "size",
+      sorter: true,
       render: (size: string | null) => (size ? `${size} MB` : "-"),
     },
     {
       title: "修改日期",
       dataIndex: "createTime",
       key: "createTime",
+      sorter: true,
       render: (time: number) => formatDateTime(time),
     },
   ];
@@ -414,6 +455,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           showHeader={true}
           loading={loading}
           rowKey="id"
+          onChange={handleTableChange}
         />
       </div>
       <div
