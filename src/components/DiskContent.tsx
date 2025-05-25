@@ -19,6 +19,7 @@ import {
   SearchOutlined,
   AppstoreOutlined,
   BarsOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import "../layout/style/content-main.scss";
@@ -174,11 +175,15 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     const uploadStore = useUploadStore.getState();
 
     // 生成任务并添加到上传队列
-    const tasks = fileArray.map((file) => ({
-      id: `${file.name}-${Date.now()}-${Math.random()}`,
-      file: file as File,
-      catalogue: currentPath,
-    }));
+    const tasks = fileArray.map((file) => {
+      const taskId = `${file.name}-${Date.now()}-${Math.random()}`;
+      return {
+        id: taskId,
+        file: file as File,
+        catalogue: currentPath,
+        deleteTask: () => handleDeleteUploadTask(taskId),
+      };
+    });
 
     // 添加任务到上传队列
     uploadStore.addTasks(tasks);
@@ -337,17 +342,21 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     );
 
     // 生成下载任务
-    const tasks = selectedFiles.map((file) => ({
-      id: `${file.name}-${Date.now()}-${Math.random()}`,
-      file: {
-        name: file.name,
-        size: parseFloat(file.size || "0"),
-        type: file.type,
-      },
-      status: "pending" as const,
-      progress: 0,
-      error: undefined,
-    }));
+    const tasks = selectedFiles.map((file) => {
+      const taskId = `${file.name}-${Date.now()}-${Math.random()}`;
+      return {
+        id: taskId,
+        file: {
+          name: file.name,
+          size: parseFloat(file.size || "0"),
+          type: file.type,
+        },
+        status: "pending" as const,
+        progress: 0,
+        error: undefined,
+        deleteTask: () => handleDeleteDownloadTask(taskId),
+      };
+    });
 
     // 添加任务到下载队列
     downloadStore.addTasks(tasks);
@@ -429,6 +438,19 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
     // TODO: 实现批量分享逻辑
     message.info(`准备分享 ${selectedRowKeys.length} 个文件`);
+  };
+
+  // 修改删除处理函数
+  const handleDeleteUploadTask = (taskId: string) => {
+    const uploadStore = useUploadStore.getState();
+    uploadStore.removeTask(taskId);
+    message.success("已删除上传任务");
+  };
+
+  const handleDeleteDownloadTask = (taskId: string) => {
+    const downloadStore = useDownloadStore.getState();
+    downloadStore.removeTask(taskId);
+    message.success("已删除下载任务");
   };
 
   // 表格列定义

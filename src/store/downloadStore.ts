@@ -13,6 +13,7 @@ interface DownloadStore {
   ) => void;
   clearTasksByStatus: (status?: DownloadStatus) => void;
   initTasks: () => void;
+  removeTask: (taskId: string) => void;
 }
 
 export const useDownloadStore = create<DownloadStore>()(
@@ -44,6 +45,11 @@ export const useDownloadStore = create<DownloadStore>()(
           tasks: status
             ? state.tasks.filter((task) => task.status !== status)
             : [],
+        })),
+
+      removeTask: (taskId) =>
+        set((state) => ({
+          tasks: state.tasks.filter((task) => task.id !== taskId),
         })),
 
       initTasks: () => {

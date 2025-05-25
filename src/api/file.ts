@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-05-24 18:34:17
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-24 21:07:25
+ * @LastEditTime: 2025-05-25 23:44:09
  * @FilePath: \CloudDiskWeb\src\api\file.ts
  */
 import request from "@/utils/request";
@@ -14,11 +14,11 @@ import type {
 } from "axios";
 
 export interface FileInfo {
-  id: number;
+  id: string;
   name: string;
   type: number;
   size: string;
-  createTime: number;
+  createTime: string;
 }
 
 interface CreateFileParams {
@@ -36,11 +36,11 @@ interface ProgressConfig {
 export interface FileListParams {
   catalogue?: string;
   type?: number;
-  keyword?: string;
+  name?: string;
   pageNo?: number;
   pageSize?: number;
   sortField?: string;
-  sortOrder?: "ascend" | "descend" | null;
+  sortOrder?: string | null;
 }
 
 export interface FileListResponse {
@@ -57,23 +57,30 @@ interface DownloadOptions {
 }
 
 // 创建文件
-export const createFile = async (
+export const createFile = (
   data: FormData,
-  config?: AxiosRequestConfig
+  config?: {
+    onUploadProgress?: (progressEvent: AxiosProgressEvent) => void;
+  }
 ) => {
-  return request.post("/admin-api/system/hadoop-file/create", data, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    ...config,
-  });
+  return request.post<ApiResponse<any>>(
+    "/admin-api/system/hadoop-file/create",
+    data,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      ...config,
+    }
+  );
 };
 
 // 获取文件列表
 export const getFileList = (params: FileListParams) => {
-  return request.get<FileListResponse>("/admin-api/system/hadoop-file/list", {
-    params,
-  });
+  return request.get<ApiResponse<FileListResponse>>(
+    "/admin-api/system/hadoop-file/list",
+    { params }
+  );
 };
 
 // 删除文件或目录
@@ -103,40 +110,16 @@ export const renameFile = (
   });
 };
 
-export async function downloadFile(params: {
+// 下载文件
+export const downloadFile = (params: {
   fileId: string;
-  onDownloadProgress?: (progressEvent: any) => void;
-}) {
-  // 使用 fetch API 处理文件下载
-  const response = await fetch(
+  onDownloadProgress?: (progressEvent: AxiosProgressEvent) => void;
+}) => {
+  return request.get(
     `/admin-api/system/hadoop-file/download/${params.fileId}`,
     {
-      method: "GET",
+      responseType: "blob",
+      onDownloadProgress: params.onDownloadProgress,
     }
   );
-
-  if (!response.ok) {
-    throw new Error(`下载失败: ${response.status} ${response.statusText}`);
-  }
-
-  // 获取文件名
-  const contentDisposition = response.headers.get("content-disposition");
-  let filename = "";
-  if (contentDisposition) {
-    const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
-    if (matches && matches[1]) {
-      filename = decodeURIComponent(matches[1]);
-    }
-  }
-
-  // 获取文件内容
-  const blob = await response.blob();
-
-  return {
-    data: blob,
-    headers: {
-      "content-disposition": contentDisposition,
-      "content-type": response.headers.get("content-type"),
-    },
-  };
-}
+};

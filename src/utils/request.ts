@@ -56,6 +56,11 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
+    // 如果是下载文件，直接返回响应
+    if (response.config.responseType === "blob") {
+      return response;
+    }
+
     const res = response.data;
     if (res.code === 401) {
       // 未登录或token过期
