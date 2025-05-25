@@ -14,6 +14,7 @@ import {
   UploadOutlined,
   FolderAddOutlined,
   CloudDownloadOutlined,
+  ShareAltOutlined,
   SettingOutlined,
   SearchOutlined,
   AppstoreOutlined,
@@ -322,6 +323,26 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     loadFileList(pagination.current, fileType);
   };
 
+  // 处理批量下载
+  const handleBatchDownload = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("请选择要下载的文件");
+      return;
+    }
+    // TODO: 实现批量下载逻辑
+    message.info(`准备下载 ${selectedRowKeys.length} 个文件`);
+  };
+
+  // 处理批量分享
+  const handleBatchShare = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("请选择要分享的文件");
+      return;
+    }
+    // TODO: 实现批量分享逻辑
+    message.info(`准备分享 ${selectedRowKeys.length} 个文件`);
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -392,17 +413,16 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             multiple
             showUploadList={false}
             beforeUpload={(file, fileList) => {
-              // 只在完整的文件列表上传时处理
               if (file === fileList[0]) {
                 handleFileUpload(fileList);
               }
               return false;
             }}
-            disabled={fileType !== undefined}
+            disabled={fileType !== undefined || selectedRowKeys.length > 0}
           >
             <Button
               type="primary"
-              disabled={fileType !== undefined}
+              disabled={fileType !== undefined || selectedRowKeys.length > 0}
               icon={<UploadOutlined />}
             >
               上传
@@ -411,10 +431,24 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           <Button
             icon={<FolderAddOutlined />}
             onClick={() => setCreateFolderVisible(true)}
-            disabled={fileType !== undefined}
+            disabled={fileType !== undefined || selectedRowKeys.length > 0}
           >
             新建文件夹
           </Button>
+          {selectedRowKeys.length > 0 && (
+            <>
+              <Button
+                type="primary"
+                icon={<CloudDownloadOutlined />}
+                onClick={handleBatchDownload}
+              >
+                下载
+              </Button>
+              <Button icon={<ShareAltOutlined />} onClick={handleBatchShare}>
+                分享
+              </Button>
+            </>
+          )}
         </div>
         <div className="right-search">
           <Input
