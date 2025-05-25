@@ -25,7 +25,7 @@ import CreateFolderModal from "./CreateFolderModal";
 import { FileType, FileTypeMap, getFileTypeByExt } from "../enums/FileTypeEnum";
 import { createFile, getFileList } from "@/api/file";
 import { FileInfo } from "@/types/file";
-import { useUploadStore } from "@/store/upload";
+import { useUploadStore } from "@/store/uploadStore";
 import dayjs from "dayjs";
 
 const { Content } = Layout;
@@ -125,6 +125,12 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     loadFileList(1, fileType);
   }, [currentPath, fileType]);
 
+  // 初始化上传任务
+  useEffect(() => {
+    const uploadStore = useUploadStore.getState();
+    uploadStore.initTasks();
+  }, []);
+
   // 处理搜索
   const handleSearch = () => {
     loadFileList(1, fileType);
@@ -141,22 +147,15 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     const fileArray = Array.from(fileList);
     const uploadStore = useUploadStore.getState();
 
-    // 生成任务ID并添加到上传队列
+    // 生成任务并添加到上传队列
     const tasks = fileArray.map((file) => ({
       id: `${file.name}-${Date.now()}-${Math.random()}`,
-      file: {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      },
-      status: "uploading" as const,
-      progress: 0,
+      file: file as File,
+      catalogue: currentPath,
     }));
 
     // 添加任务到上传队列
-    tasks.forEach((task) => {
-      uploadStore.addTask(task);
-    });
+    uploadStore.addTasks(tasks);
 
     message.success(`已添加 ${fileArray.length} 个文件到上传队列`);
 
@@ -181,26 +180,20 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               const progress = Math.round(
                 (progressEvent.loaded / progressEvent.total) * 100
               );
-              uploadStore.updateTask(task.id, { progress });
+              uploadStore.updateTaskProgress(task.id, progress);
             }
           },
         });
 
         if (res.code === 0) {
-          uploadStore.updateTask(task.id, { status: "success" });
+          uploadStore.updateTaskStatus(task.id, "completed");
           // 刷新文件列表
           loadFileList();
         } else {
-          uploadStore.updateTask(task.id, {
-            status: "failed",
-            error: res.msg || "上传失败",
-          });
+          uploadStore.updateTaskStatus(task.id, "error", res.msg || "上传失败");
         }
       } catch (error) {
-        uploadStore.updateTask(task.id, {
-          status: "failed",
-          error: "上传失败",
-        });
+        uploadStore.updateTaskStatus(task.id, "error", "上传失败");
         console.error("Upload error:", error);
       }
     }

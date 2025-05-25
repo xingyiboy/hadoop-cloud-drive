@@ -1,7 +1,7 @@
 import React from "react";
 import { List, Progress, Empty, Typography } from "antd";
 import { useLocation } from "react-router-dom";
-import { useUploadStore, UploadTask } from "@/store/upload";
+import { useUploadStore } from "@/store/uploadStore";
 import { formatFileSize } from "@/utils/format";
 import "./UploadingContent.scss";
 
@@ -9,50 +9,57 @@ const { Title, Text } = Typography;
 
 const UploadingContent: React.FC = () => {
   const location = useLocation();
-  const { uploadTasks } = useUploadStore();
+  const tasks = useUploadStore((state) => state.tasks);
 
   const getStatusTitle = (path: string): string => {
     if (path.includes("uploading")) return "正在上传";
-    if (path.includes("success")) return "上传成功";
-    if (path.includes("failed")) return "上传失败";
+    if (path.includes("completed")) return "上传成功";
+    if (path.includes("error")) return "上传失败";
     return "全部上传";
   };
 
-  const getFilteredTasks = (): UploadTask[] => {
+  const getFilteredTasks = () => {
     if (location.pathname.includes("uploading")) {
-      return uploadTasks.filter((task) => task.status === "uploading");
+      return tasks.filter(
+        (task) => task.status === "uploading" || task.status === "pending"
+      );
     }
-    if (location.pathname.includes("success")) {
-      return uploadTasks.filter((task) => task.status === "success");
+    if (location.pathname.includes("completed")) {
+      return tasks.filter((task) => task.status === "completed");
     }
-    if (location.pathname.includes("failed")) {
-      return uploadTasks.filter((task) => task.status === "failed");
+    if (location.pathname.includes("error")) {
+      return tasks.filter((task) => task.status === "error");
     }
-    return uploadTasks;
+    return tasks;
   };
 
   const getTaskStatusStyle = (
-    status: UploadTask["status"]
+    status: "pending" | "uploading" | "completed" | "error"
   ): "success" | "danger" | undefined => {
     switch (status) {
+      case "pending":
       case "uploading":
         return undefined;
-      case "success":
+      case "completed":
         return "success";
-      case "failed":
+      case "error":
         return "danger";
       default:
         return undefined;
     }
   };
 
-  const getStatusText = (status: UploadTask["status"]): string => {
+  const getStatusText = (
+    status: "pending" | "uploading" | "completed" | "error"
+  ): string => {
     switch (status) {
+      case "pending":
+        return "等待上传";
       case "uploading":
         return "正在上传";
-      case "success":
+      case "completed":
         return "上传完成";
-      case "failed":
+      case "error":
         return "上传失败";
       default:
         return "";
@@ -70,7 +77,7 @@ const UploadingContent: React.FC = () => {
         <List
           className="task-list"
           dataSource={filteredTasks}
-          renderItem={(task: UploadTask) => (
+          renderItem={(task) => (
             <List.Item>
               <div className="task-item">
                 <div className="task-info">
@@ -79,11 +86,15 @@ const UploadingContent: React.FC = () => {
                     {formatFileSize(task.file.size)}
                   </Text>
                 </div>
-                {task.status === "uploading" ? (
-                  <Progress percent={task.progress} status="active" />
+                {task.status === "uploading" || task.status === "pending" ? (
+                  <Progress
+                    percent={task.progress}
+                    status={task.status === "pending" ? "normal" : "active"}
+                  />
                 ) : (
                   <Text type={getTaskStatusStyle(task.status)}>
                     {getStatusText(task.status)}
+                    {task.error && `: ${task.error}`}
                   </Text>
                 )}
               </div>
