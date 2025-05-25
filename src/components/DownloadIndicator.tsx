@@ -3,20 +3,18 @@ import { Badge, Button } from "antd";
 import { CloudDownloadOutlined } from "@ant-design/icons";
 import { useDownloadStore } from "../store/downloadStore";
 import { useNavigate } from "react-router-dom";
+import { DownloadStore, DownloadTask } from "../types/download";
 import "./DownloadIndicator.scss";
 
 const DownloadIndicator: React.FC = () => {
-  const tasks = useDownloadStore((state) => state.tasks);
+  const tasks = useDownloadStore((state: DownloadStore) => state.tasks);
   const navigate = useNavigate();
 
   const { downloadingCount, totalCount } = useMemo(() => {
     const downloadingCount = tasks.filter(
-      (task) => task.status === "downloading"
+      (task: DownloadTask) => task.status === "downloading"
     ).length;
-    const pendingCount = tasks.filter(
-      (task) => task.status === "pending"
-    ).length;
-    const totalCount = downloadingCount + pendingCount;
+    const totalCount = tasks.length;
     return {
       downloadingCount,
       totalCount,
@@ -32,7 +30,7 @@ const DownloadIndicator: React.FC = () => {
       <Button
         type="primary"
         icon={<CloudDownloadOutlined />}
-        onClick={() => navigate("/downloading")}
+        onClick={() => navigate("/download/downloading")}
       >
         <Badge
           count={totalCount}

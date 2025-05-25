@@ -8,6 +8,7 @@ import React, { Suspense } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { getToken } from "@/utils/setToken";
 import LayoutApp from "@/layout";
+import DownloadingContent from "@/components/DownloadingContent";
 
 const Login = React.lazy(() => import("@/views/login"));
 const Register = React.lazy(() => import("@/views/register"));
@@ -102,15 +103,15 @@ const routes = [
       },
       {
         path: "download/downloading",
-        element: <LayoutApp />,
+        element: <DownloadingContent />,
       },
       {
         path: "download/downloaded",
-        element: <LayoutApp />,
+        element: <DownloadingContent />,
       },
       {
         path: "download/failed",
-        element: <LayoutApp />,
+        element: <DownloadingContent />,
       },
     ],
   },

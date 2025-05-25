@@ -1,10 +1,10 @@
 import React from "react";
 import { List, Progress, Empty, Typography, Button, Modal, Layout } from "antd";
 import { useLocation } from "react-router-dom";
-import { useDownloadStore } from "@/store/downloadStore";
+import { useDownloadStore } from "../store/downloadStore";
 import { formatFileSize } from "@/utils/format";
 import { DeleteOutlined } from "@ant-design/icons";
-import { DownloadTask } from "@/types/download";
+import { DownloadStore, DownloadTask } from "../types/download";
 import "./DownloadingContent.scss";
 
 const { Title, Text } = Typography;
@@ -12,21 +12,15 @@ const { Content } = Layout;
 
 const DownloadingContent: React.FC = () => {
   const location = useLocation();
-  const tasks = useDownloadStore(
-    (state: { tasks: DownloadTask[] }) => state.tasks
-  );
+  const tasks = useDownloadStore((state: DownloadStore) => state.tasks);
   const clearTasksByStatus = useDownloadStore(
-    (state: {
-      clearTasksByStatus: (
-        status?: "downloading" | "downloaded" | "failed"
-      ) => void;
-    }) => state.clearTasksByStatus
+    (state: DownloadStore) => state.clearTasksByStatus
   );
 
   const getStatusTitle = (path: string): string => {
-    if (path.includes("/download/downloading")) return "正在下载";
-    if (path.includes("/download/downloaded")) return "已下载";
-    if (path.includes("/download/failed")) return "下载失败";
+    if (path === "/downloading") return "正在下载";
+    if (path === "/downloaded") return "已下载";
+    if (path === "/failed") return "下载失败";
     return "全部下载";
   };
 
@@ -36,19 +30,16 @@ const DownloadingContent: React.FC = () => {
     | "failed"
     | undefined => {
     const path = location.pathname;
-    if (path === "/download/downloading") return "downloading";
-    if (path === "/download/downloaded") return "downloaded";
-    if (path === "/download/failed") return "failed";
+    if (path === "/downloading") return "downloading";
+    if (path === "/downloaded") return "downloaded";
+    if (path === "/failed") return "failed";
     return undefined;
   };
 
   const getFilteredTasks = () => {
     const status = getCurrentStatus();
     if (status) {
-      return tasks.filter((task) => {
-        if (status === "failed") return task.status === "failed";
-        return task.status === status;
-      });
+      return tasks.filter((task: DownloadTask) => task.status === status);
     }
     return tasks;
   };

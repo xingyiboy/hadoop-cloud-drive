@@ -3,13 +3,13 @@ import { FileType } from "../enums/FileTypeEnum";
 export interface DownloadFile {
   name: string;
   size: number;
-  type: FileType;
+  type: number;
 }
 
 export interface DownloadTask {
   id: string;
   file: DownloadFile;
-  status: "pending" | "downloading" | "downloaded" | "failed";
+  status: "downloading" | "downloaded" | "failed";
   progress: number;
   error?: string;
 }
