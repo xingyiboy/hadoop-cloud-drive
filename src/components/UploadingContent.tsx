@@ -1,8 +1,9 @@
 import React from "react";
-import { List, Progress, Empty, Typography } from "antd";
+import { List, Progress, Empty, Typography, Button, Modal } from "antd";
 import { useLocation } from "react-router-dom";
 import { useUploadStore } from "@/store/uploadStore";
 import { formatFileSize } from "@/utils/format";
+import { DeleteOutlined } from "@ant-design/icons";
 import "./UploadingContent.scss";
 
 const { Title, Text } = Typography;
@@ -10,6 +11,9 @@ const { Title, Text } = Typography;
 const UploadingContent: React.FC = () => {
   const location = useLocation();
   const tasks = useUploadStore((state) => state.tasks);
+  const clearTasksByStatus = useUploadStore(
+    (state) => state.clearTasksByStatus
+  );
 
   const getStatusTitle = (path: string): string => {
     if (path.includes("uploading")) return "正在上传";
@@ -18,15 +22,21 @@ const UploadingContent: React.FC = () => {
     return "全部上传";
   };
 
+  const getCurrentStatus = ():
+    | "uploading"
+    | "success"
+    | "failed"
+    | undefined => {
+    if (location.pathname.includes("uploading")) return "uploading";
+    if (location.pathname.includes("success")) return "success";
+    if (location.pathname.includes("failed")) return "failed";
+    return undefined;
+  };
+
   const getFilteredTasks = () => {
-    if (location.pathname.includes("uploading")) {
-      return tasks.filter((task) => task.status === "uploading");
-    }
-    if (location.pathname.includes("success")) {
-      return tasks.filter((task) => task.status === "success");
-    }
-    if (location.pathname.includes("failed")) {
-      return tasks.filter((task) => task.status === "failed");
+    const status = getCurrentStatus();
+    if (status) {
+      return tasks.filter((task) => task.status === status);
     }
     return tasks;
   };
@@ -61,13 +71,39 @@ const UploadingContent: React.FC = () => {
     }
   };
 
+  const handleClearTasks = () => {
+    const status = getCurrentStatus();
+    const statusText = status ? getStatusText(status) : "所有";
+    Modal.confirm({
+      title: "确认清空",
+      content: `确定要清空${statusText}任务吗？`,
+      okText: "确定",
+      cancelText: "取消",
+      onOk: () => {
+        clearTasksByStatus(status);
+      },
+    });
+  };
+
   const filteredTasks = getFilteredTasks();
 
   return (
     <div className="uploading-content">
-      <Title level={4} className="page-title">
-        {getStatusTitle(location.pathname)}
-      </Title>
+      <div className="header-uploading">
+        <Title level={4} className="page-title">
+          {getStatusTitle(location.pathname)}
+        </Title>
+        {filteredTasks.length > 0 && (
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={handleClearTasks}
+          >
+            清空
+          </Button>
+        )}
+      </div>
       {filteredTasks.length > 0 ? (
         <List
           className="task-list"

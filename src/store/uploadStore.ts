@@ -29,6 +29,7 @@ interface UploadStore {
     error?: string
   ) => void;
   removeTask: (id: string) => void;
+  clearTasksByStatus: (status?: UploadTask["status"]) => void;
 }
 
 export const useUploadStore = create<UploadStore>((set, get) => ({
@@ -96,6 +97,19 @@ export const useUploadStore = create<UploadStore>((set, get) => ({
   removeTask: (id) => {
     set((state) => {
       const updatedTasks = state.tasks.filter((task) => task.id !== id);
+      // 保存到 IndexedDB
+      indexedDBService.saveTasks(updatedTasks).catch((error) => {
+        console.error("Failed to save tasks to IndexedDB:", error);
+      });
+      return { tasks: updatedTasks };
+    });
+  },
+
+  clearTasksByStatus: (status) => {
+    set((state) => {
+      const updatedTasks = status
+        ? state.tasks.filter((task) => task.status !== status)
+        : [];
       // 保存到 IndexedDB
       indexedDBService.saveTasks(updatedTasks).catch((error) => {
         console.error("Failed to save tasks to IndexedDB:", error);

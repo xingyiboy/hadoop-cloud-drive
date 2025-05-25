@@ -2,10 +2,17 @@
   padding: 24px;
   background: #fff;
 
-  .page-title {
+  .header-uploading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 24px;
-    color: #1f1f1f;
-    font-weight: 500;
+
+    .page-title {
+      margin-bottom: 0;
+      color: #1f1f1f;
+      font-weight: 500;
+    }
   }
 
   .task-list {
