@@ -96,16 +96,19 @@ export const moveFile = (
   });
 };
 
-// 重命名文件或目录
-export const renameFile = (
-  id: number,
-  newName: string
-): Promise<ApiResponse<void>> => {
-  return request.put("/admin-api/system/hadoop-file/rename", {
-    id,
-    newName,
-  });
-};
+/**
+ * 重命名文件
+ * @param id 文件ID
+ * @param newName 新文件名
+ * @returns
+ */
+export function renameFile(id: string, newName: string) {
+  return request.post(
+    `/admin-api/system/hadoop-file/rename?id=${id}&newName=${encodeURIComponent(
+      newName
+    )}`
+  );
+}
 
 // 下载文件
 export const downloadFile = (params: {

@@ -36,7 +36,12 @@ import { useUploadStore } from "@/store/uploadStore";
 import { useDownloadStore } from "@/store/downloadStore";
 import dayjs from "dayjs";
 import request from "@/utils/request";
-import { shareFile, cancelShare, batchShareFiles } from "@/api/file";
+import {
+  shareFile,
+  cancelShare,
+  batchShareFiles,
+  renameFile,
+} from "@/api/file";
 import { useLocation } from "react-router-dom";
 
 const { Content } = Layout;
@@ -156,6 +161,10 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   const [actionLoading, setActionLoading] = useState(false);
   // 添加视图类型状态
   const [viewType, setViewType] = useState<"list" | "grid">("list");
+  // 添加重命名相关的状态
+  const [editingFileId, setEditingFileId] = useState<string | null>(null);
+  const [editingFileName, setEditingFileName] = useState<string>("");
+  const [isRenaming, setIsRenaming] = useState(false);
 
   const location = useLocation();
   const baseUrl = window.location.origin;
@@ -1076,6 +1085,49 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
+  // 添加重命名相关的函数
+  const handleRenameStart = (record: FileInfo, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingFileId(record.id.toString());
+    setEditingFileName(record.name);
+  };
+
+  const handleRenameCancel = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingFileId(null);
+    setEditingFileName("");
+  };
+
+  const handleRenameSubmit = async (record: FileInfo, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!editingFileName.trim()) {
+      message.error("文件名不能为空");
+      return;
+    }
+
+    if (editingFileName === record.name) {
+      handleRenameCancel();
+      return;
+    }
+
+    try {
+      setIsRenaming(true);
+      const res = await renameFile(record.id.toString(), editingFileName);
+      if (res.code === 0) {
+        message.success("重命名成功");
+        loadFileList(pagination.current, fileType);
+      } else {
+        message.error(res.msg || "重命名失败");
+      }
+    } catch (error) {
+      message.error("重命名失败");
+      console.error("Rename error:", error);
+    } finally {
+      setIsRenaming(false);
+      handleRenameCancel();
+    }
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -1139,7 +1191,19 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 }`}
               >
                 {getFileIcon(record.type)}
-                <span className="file-name-text">{actualName}</span>
+                {editingFileId === record.id.toString() ? (
+                  <Input
+                    value={editingFileName}
+                    onChange={(e) => setEditingFileName(e.target.value)}
+                    onPressEnter={() => handleRenameSubmit(record)}
+                    onBlur={() => handleRenameSubmit(record)}
+                    onClick={(e) => e.stopPropagation()}
+                    autoFocus
+                    disabled={isRenaming}
+                  />
+                ) : (
+                  <span className="file-name-text">{actualName}</span>
+                )}
                 <div className="file-actions">
                   <Button
                     type="link"
@@ -1176,9 +1240,28 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             <div
               className={`file-name-content ${actionLoading ? "disabled" : ""}`}
               onClick={() => !actionLoading && handleFileClick(record)}
+              onDoubleClick={(e) =>
+                !actionLoading && handleRenameStart(record, e)
+              }
+              onContextMenu={(e) => {
+                e.preventDefault();
+                !actionLoading && handleRenameStart(record, e);
+              }}
             >
               {getFileIcon(record.type)}
-              <span className="file-name-text">{text}</span>
+              {editingFileId === record.id.toString() ? (
+                <Input
+                  value={editingFileName}
+                  onChange={(e) => setEditingFileName(e.target.value)}
+                  onPressEnter={() => handleRenameSubmit(record)}
+                  onBlur={() => handleRenameSubmit(record)}
+                  onClick={(e) => e.stopPropagation()}
+                  autoFocus
+                  disabled={isRenaming}
+                />
+              ) : (
+                <span className="file-name-text">{text}</span>
+              )}
               <div className="file-actions">
                 {fileType === 7 ? (
                   <Button
@@ -1530,6 +1613,13 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                   selectedRowKeys.includes(file.id.toString()) ? "selected" : ""
                 }`}
                 onClick={() => !actionLoading && handleFileClick(file)}
+                onDoubleClick={(e) =>
+                  !actionLoading && handleRenameStart(file, e)
+                }
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  !actionLoading && handleRenameStart(file, e);
+                }}
               >
                 <div className="grid-item-checkbox">
                   <Checkbox
@@ -1547,9 +1637,21 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                   />
                 </div>
                 <div className="grid-item-icon">{getFileIcon(file.type)}</div>
-                <div className="grid-item-name" title={file.name}>
-                  {file.name}
-                </div>
+                {editingFileId === file.id.toString() ? (
+                  <Input
+                    value={editingFileName}
+                    onChange={(e) => setEditingFileName(e.target.value)}
+                    onPressEnter={() => handleRenameSubmit(file)}
+                    onBlur={() => handleRenameSubmit(file)}
+                    onClick={(e) => e.stopPropagation()}
+                    autoFocus
+                    disabled={isRenaming}
+                  />
+                ) : (
+                  <div className="grid-item-name" title={file.name}>
+                    {file.name}
+                  </div>
+                )}
                 <div className="grid-item-info">
                   <span>{file.size ? `${file.size} MB` : "-"}</span>
                   <span>{formatDateTime(Number(file.createTime))}</span>
