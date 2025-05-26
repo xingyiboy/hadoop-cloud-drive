@@ -504,7 +504,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
-  // 处理取消分享
+  // 处理单个文件取消分享
   const handleCancelShare = async (record: FileInfo) => {
     try {
       const res = await cancelShare(record.id.toString());
@@ -799,18 +799,13 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                   }}
                 />
               ) : fileType === 8 ? (
-                selectedRowKeys.length > 0 && (
-                  <Button
-                    type="primary"
-                    icon={<UndoOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleBatchCancelShare();
-                    }}
-                  >
-                    取消分享
-                  </Button>
-                )
+                <UndoOutlined
+                  className="action-icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCancelShare(record);
+                  }}
+                />
               ) : (
                 <>
                   <CloudDownloadOutlined
@@ -829,13 +824,15 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                   />
                 </>
               )}
-              <DeleteOutlined
-                className="action-icon danger"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSingleDelete(record);
-                }}
-              />
+              {fileType === 8 ? null : (
+                <DeleteOutlined
+                  className="action-icon danger"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSingleDelete(record);
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
