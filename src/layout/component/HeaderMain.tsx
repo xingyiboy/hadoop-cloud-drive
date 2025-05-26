@@ -195,6 +195,22 @@ const HeaderMain: React.FC<HeaderMainProps> = ({ activeTab, onTabChange }) => {
     form.resetFields();
   };
 
+  // 处理导航菜单点击
+  const handleTabClick = (key: number) => {
+    onTabChange(key);
+    // 根据不同的 tab 导航到不同的页面
+    switch (key) {
+      case 3: // 正在上传
+        navigate("/upload/uploading");
+        break;
+      case 4: // 正在下载
+        navigate("/download/downloading");
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <Header
       className="header"
@@ -210,7 +226,7 @@ const HeaderMain: React.FC<HeaderMainProps> = ({ activeTab, onTabChange }) => {
           selectedKeys={[activeTab.toString()]}
           items={navMenuItems}
           style={{ flex: 1, minWidth: 0 }}
-          onClick={(info) => onTabChange(Number(info.key))}
+          onClick={(info) => handleTabClick(Number(info.key))}
         />
       </div>
       <div className="right">
