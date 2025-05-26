@@ -167,6 +167,12 @@
               &:hover {
                 color: #1677ff;
               }
+
+              &.disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                pointer-events: none;
+              }
             }
           }
 
@@ -180,11 +186,63 @@
               display: flex;
             }
           }
+
+          &.disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+          }
         }
       }
 
       .ant-checkbox-wrapper {
         margin-right: 8px;
+      }
+    }
+  }
+
+  position: relative;
+
+  &::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.6);
+    z-index: 1000;
+    display: none;
+  }
+
+  &.loading::after {
+    display: block;
+  }
+
+  .global-loading-wrapper {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 24px 48px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+
+    .ant-spin {
+      .ant-spin-text {
+        margin-top: 8px;
+        font-size: 14px;
+        color: #666;
+      }
+
+      .anticon {
+        font-size: 24px;
+        color: #1677ff;
       }
     }
   }

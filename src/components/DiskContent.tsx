@@ -7,6 +7,7 @@ import {
   Upload,
   message,
   Pagination,
+  Spin,
 } from "antd";
 import type { RcFile } from "antd/lib/upload";
 import type { SorterResult } from "antd/lib/table/interface";
@@ -22,6 +23,7 @@ import {
   DeleteOutlined,
   UndoOutlined,
   CopyOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import "../layout/style/content-main.scss";
@@ -114,9 +116,13 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   const [groupedSharedFiles, setGroupedSharedFiles] = useState<
     GroupedSharedFile[]
   >([]);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const location = useLocation();
   const baseUrl = window.location.origin;
+
+  // 自定义加载图标
+  const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
   // 加载文件列表
   const loadFileList = async (
@@ -226,9 +232,11 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     uploadStore.initTasks();
   }, []);
 
-  // 处理搜索
+  // 修改搜索处理函数
   const handleSearch = () => {
-    loadFileList(1, fileType);
+    if (!actionLoading) {
+      loadFileList(1, fileType);
+    }
   };
 
   // 处理分页变化
@@ -505,10 +513,10 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 处理单个文件分享
   const handleSingleShare = async (record: FileInfo) => {
     try {
+      setActionLoading(true);
       const res = await shareFile(record.id.toString());
       if (res.code === 0) {
         message.success("分享成功");
-        // 刷新文件列表
         loadFileList(pagination.current, fileType);
       } else {
         message.error(res.msg || "分享失败");
@@ -516,6 +524,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     } catch (error) {
       message.error("分享失败");
       console.error("Share error:", error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -527,12 +537,11 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
 
     try {
+      setActionLoading(true);
       const res = await batchShareFiles(selectedRowKeys);
       if (res.code === 0) {
         message.success("批量分享成功");
-        // 清空选中状态
         setSelectedRowKeys([]);
-        // 刷新文件列表
         loadFileList(pagination.current, fileType);
       } else {
         message.error(res.msg || "批量分享失败");
@@ -540,6 +549,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     } catch (error) {
       message.error("批量分享失败");
       console.error("Batch share error:", error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -685,10 +696,10 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 处理单个文件删除
   const handleSingleDelete = async (record: FileInfo) => {
     try {
+      setActionLoading(true);
       const res = await deleteFile(record.id.toString());
       if (res.code === 0) {
         message.success("删除成功");
-        // 刷新文件列表
         loadFileList(pagination.current, fileType);
       } else {
         message.error(res.msg || "删除失败");
@@ -696,6 +707,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     } catch (error) {
       message.error("删除失败");
       console.error("Delete error:", error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -707,7 +720,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
 
     try {
-      // 逐个删除选中的文件
+      setActionLoading(true);
       for (const id of selectedRowKeys) {
         const res = await deleteFile(id);
         if (res.code !== 0) {
@@ -716,13 +729,13 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       }
 
       message.success("批量删除完成");
-      // 清空选中状态
       setSelectedRowKeys([]);
-      // 刷新文件列表
       loadFileList(pagination.current, fileType);
     } catch (error) {
       message.error("批量删除失败");
       console.error("Batch delete error:", error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -803,8 +816,11 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             }
             onChange={(e) => {
               e.stopPropagation();
-              handleSelectAll(e.target.checked);
+              if (!actionLoading) {
+                handleSelectAll(e.target.checked);
+              }
             }}
+            disabled={actionLoading}
           />
           <span>文件名</span>
         </div>
@@ -815,9 +831,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       ellipsis: true,
       sorter: true,
       render: (text: string, record: FileInfo) => {
-        // 如果是分享页面，特殊处理显示方式
         if (fileType === 8) {
-          // 从文件名中提取实际文件名（去掉分享路径前缀）
           const actualName = text.split("/").pop() || text;
           return (
             <div className="file-name-cell">
@@ -825,18 +839,22 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 checked={selectedRowKeys.includes(record.id.toString())}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) =>
+                  !actionLoading &&
                   handleSelect(e.target.checked, record.id.toString())
                 }
+                disabled={actionLoading}
               />
               <div className="file-name-content">
                 {getFileIcon(record.type)}
                 <span className="file-name-text">{actualName}</span>
                 <div className="file-actions">
                   <UndoOutlined
-                    className="action-icon"
+                    className={`action-icon ${actionLoading ? "disabled" : ""}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleCancelShare(record);
+                      if (!actionLoading) {
+                        handleCancelShare(record);
+                      }
                     }}
                   />
                 </div>
@@ -845,52 +863,67 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           );
         }
 
-        // 非分享页面保持原有渲染逻辑
         return (
           <div className="file-name-cell">
             <Checkbox
               checked={selectedRowKeys.includes(record.id.toString())}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) =>
+                !actionLoading &&
                 handleSelect(e.target.checked, record.id.toString())
               }
+              disabled={actionLoading}
             />
             <div
               className="file-name-content"
-              onClick={() => handleFileClick(record)}
+              onClick={() => !actionLoading && handleFileClick(record)}
             >
               {getFileIcon(record.type)}
               <span className="file-name-text">{text}</span>
               <div className="file-actions">
                 {fileType === 7 ? (
                   <UndoOutlined
-                    className="action-icon"
+                    className={`action-icon ${actionLoading ? "disabled" : ""}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSingleRestore(record);
+                      if (!actionLoading) {
+                        handleSingleRestore(record);
+                      }
                     }}
                   />
                 ) : (
                   <>
                     <CloudDownloadOutlined
-                      className="action-icon"
+                      className={`action-icon ${
+                        actionLoading ? "disabled" : ""
+                      }`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleSingleDownload(record);
+                        if (!actionLoading) {
+                          handleSingleDownload(record);
+                        }
                       }}
                     />
                     <ShareAltOutlined
-                      className="action-icon"
+                      className={`action-icon ${
+                        actionLoading ? "disabled" : ""
+                      }`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleSingleShare(record);
+                        if (!actionLoading) {
+                          handleSingleShare(record);
+                        }
                       }}
                     />
                     <DeleteOutlined
-                      className="action-icon danger"
+                      className={`action-icon danger ${
+                        actionLoading ? "disabled" : ""
+                      }`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleSingleDelete(record);
+                        if (!actionLoading) {
+                          handleSingleDelete(record);
+                        }
                       }}
                     />
                   </>
@@ -924,7 +957,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   ];
 
   return (
-    <Content className="content-main">
+    <Content className={`content-main ${actionLoading ? "loading" : ""}`}>
       <div className="operation-bar">
         <div className="left-buttons">
           {fileType === 7 ? (
@@ -933,6 +966,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 type="primary"
                 icon={<UndoOutlined />}
                 onClick={handleBatchRestore}
+                disabled={actionLoading}
+                loading={actionLoading}
               >
                 恢复
               </Button>
@@ -943,6 +978,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 type="primary"
                 icon={<UndoOutlined />}
                 onClick={handleBatchCancelShare}
+                disabled={actionLoading}
+                loading={actionLoading}
               >
                 取消分享
               </Button>
@@ -953,17 +990,23 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 multiple
                 showUploadList={false}
                 beforeUpload={(file, fileList) => {
-                  if (file === fileList[0]) {
+                  if (file === fileList[0] && !actionLoading) {
                     handleFileUpload(fileList);
                   }
                   return false;
                 }}
-                disabled={fileType !== undefined || selectedRowKeys.length > 0}
+                disabled={
+                  fileType !== undefined ||
+                  selectedRowKeys.length > 0 ||
+                  actionLoading
+                }
               >
                 <Button
                   type="primary"
                   disabled={
-                    fileType !== undefined || selectedRowKeys.length > 0
+                    fileType !== undefined ||
+                    selectedRowKeys.length > 0 ||
+                    actionLoading
                   }
                   icon={<UploadOutlined />}
                 >
@@ -972,8 +1015,12 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               </Upload>
               <Button
                 icon={<FolderAddOutlined />}
-                onClick={() => setCreateFolderVisible(true)}
-                disabled={fileType !== undefined || selectedRowKeys.length > 0}
+                onClick={() => !actionLoading && setCreateFolderVisible(true)}
+                disabled={
+                  fileType !== undefined ||
+                  selectedRowKeys.length > 0 ||
+                  actionLoading
+                }
               >
                 新建文件夹
               </Button>
@@ -985,16 +1032,25 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 type="primary"
                 icon={<CloudDownloadOutlined />}
                 onClick={handleBatchDownload}
+                disabled={actionLoading}
+                loading={actionLoading}
               >
                 下载
               </Button>
-              <Button icon={<ShareAltOutlined />} onClick={handleBatchShare}>
+              <Button
+                icon={<ShareAltOutlined />}
+                onClick={handleBatchShare}
+                disabled={actionLoading}
+                loading={actionLoading}
+              >
                 分享
               </Button>
               <Button
                 danger
                 icon={<DeleteOutlined />}
                 onClick={handleBatchDelete}
+                disabled={actionLoading}
+                loading={actionLoading}
               >
                 删除
               </Button>
@@ -1007,8 +1063,9 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             prefix={<SearchOutlined />}
             className="search-input"
             value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
+            onChange={(e) => !actionLoading && setSearchKeyword(e.target.value)}
             onPressEnter={handleSearch}
+            disabled={actionLoading}
           />
           <div className="view-switch">
             <BarsOutlined className="active" />
@@ -1096,6 +1153,12 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         onCancel={() => setCreateFolderVisible(false)}
         onSubmit={handleCreateFolder}
       />
+
+      {actionLoading && (
+        <div className="global-loading-wrapper">
+          <Spin indicator={antIcon} tip="正在处理..." />
+        </div>
+      )}
     </Content>
   );
 };
