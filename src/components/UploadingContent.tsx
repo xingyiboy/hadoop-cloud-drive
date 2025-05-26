@@ -1,5 +1,5 @@
 import React from "react";
-import { List, Progress, Empty, Typography, Button, Modal } from "antd";
+import { List, Progress, Empty, Typography, Button, Modal, Layout } from "antd";
 import { useLocation } from "react-router-dom";
 import { useUploadStore } from "@/store/uploadStore";
 import { formatFileSize } from "@/utils/format";
@@ -7,6 +7,7 @@ import { DeleteOutlined } from "@ant-design/icons";
 import "./UploadingContent.scss";
 
 const { Title, Text } = Typography;
+const { Content } = Layout;
 
 const UploadingContent: React.FC = () => {
   const location = useLocation();
@@ -88,51 +89,53 @@ const UploadingContent: React.FC = () => {
   const filteredTasks = getFilteredTasks();
 
   return (
-    <div className="uploading-content">
-      <div className="header-uploading">
-        <Title level={4} className="page-title">
-          {getStatusTitle(location.pathname)}
-        </Title>
-        {filteredTasks.length > 0 && (
-          <Button
-            type="primary"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={handleClearTasks}
-          >
-            清空
-          </Button>
+    <Content className="content-main">
+      <div className="uploading-content">
+        <div className="header-uploading">
+          <Title level={4} className="page-title">
+            {getStatusTitle(location.pathname)}
+          </Title>
+          {filteredTasks.length > 0 && (
+            <Button
+              type="primary"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={handleClearTasks}
+            >
+              清空
+            </Button>
+          )}
+        </div>
+        {filteredTasks.length > 0 ? (
+          <List
+            className="task-list"
+            dataSource={filteredTasks}
+            renderItem={(task) => (
+              <List.Item>
+                <div className="task-item">
+                  <div className="task-info">
+                    <Text>{task.file.name}</Text>
+                    <Text className="task-size">
+                      {formatFileSize(task.file.size)}
+                    </Text>
+                  </div>
+                  {task.status === "uploading" ? (
+                    <Progress percent={task.progress} status="active" />
+                  ) : (
+                    <Text type={getTaskStatusStyle(task.status)}>
+                      {getStatusText(task.status)}
+                      {task.error && `: ${task.error}`}
+                    </Text>
+                  )}
+                </div>
+              </List.Item>
+            )}
+          />
+        ) : (
+          <Empty description={<span className="empty-text">暂无任务</span>} />
         )}
       </div>
-      {filteredTasks.length > 0 ? (
-        <List
-          className="task-list"
-          dataSource={filteredTasks}
-          renderItem={(task) => (
-            <List.Item>
-              <div className="task-item">
-                <div className="task-info">
-                  <Text>{task.file.name}</Text>
-                  <Text className="task-size">
-                    {formatFileSize(task.file.size)}
-                  </Text>
-                </div>
-                {task.status === "uploading" ? (
-                  <Progress percent={task.progress} status="active" />
-                ) : (
-                  <Text type={getTaskStatusStyle(task.status)}>
-                    {getStatusText(task.status)}
-                    {task.error && `: ${task.error}`}
-                  </Text>
-                )}
-              </div>
-            </List.Item>
-          )}
-        />
-      ) : (
-        <Empty description={<span className="empty-text">暂无任务</span>} />
-      )}
-    </div>
+    </Content>
   );
 };
 

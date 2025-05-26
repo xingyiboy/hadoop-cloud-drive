@@ -30,7 +30,7 @@ const UploadIndicator: React.FC = () => {
       <Button
         type="primary"
         icon={<CloudUploadOutlined />}
-        onClick={() => navigate("/uploading")}
+        onClick={() => navigate("/upload/uploading")}
       >
         <Badge
           count={totalCount}
