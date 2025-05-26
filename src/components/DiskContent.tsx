@@ -810,22 +810,25 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     {
       title: (
         <div className="file-name-header" onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={
-              fileList.length > 0 && selectedRowKeys.length === fileList.length
-            }
-            indeterminate={
-              selectedRowKeys.length > 0 &&
-              selectedRowKeys.length < fileList.length
-            }
-            onChange={(e) => {
-              e.stopPropagation();
-              if (!actionLoading) {
-                handleSelectAll(e.target.checked);
+          {fileType === 8 ? null : (
+            <Checkbox
+              checked={
+                fileList.length > 0 &&
+                selectedRowKeys.length === fileList.length
               }
-            }}
-            disabled={actionLoading}
-          />
+              indeterminate={
+                selectedRowKeys.length > 0 &&
+                selectedRowKeys.length < fileList.length
+              }
+              onChange={(e) => {
+                e.stopPropagation();
+                if (!actionLoading) {
+                  handleSelectAll(e.target.checked);
+                }
+              }}
+              disabled={actionLoading}
+            />
+          )}
           <span>文件名</span>
         </div>
       ),
@@ -1127,7 +1130,49 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             {groupedSharedFiles.map((group) => (
               <div key={group.shareKey} className="shared-group">
                 <div className="shared-group-header">
-                  <h3>分享文件夹 {group.shareKey}</h3>
+                  <div className="header-left">
+                    <Checkbox
+                      checked={
+                        group.files.length > 0 &&
+                        group.files.every((file) =>
+                          selectedRowKeys.includes(file.id.toString())
+                        )
+                      }
+                      indeterminate={
+                        group.files.some((file) =>
+                          selectedRowKeys.includes(file.id.toString())
+                        ) &&
+                        !group.files.every((file) =>
+                          selectedRowKeys.includes(file.id.toString())
+                        )
+                      }
+                      onChange={(e) => {
+                        if (!actionLoading) {
+                          const fileIds = group.files.map((file) =>
+                            file.id.toString()
+                          );
+                          if (e.target.checked) {
+                            // 添加当前分享文件夹中未选中的文件
+                            const newSelectedKeys = [
+                              ...selectedRowKeys,
+                              ...fileIds.filter(
+                                (id) => !selectedRowKeys.includes(id)
+                              ),
+                            ];
+                            setSelectedRowKeys(newSelectedKeys);
+                          } else {
+                            // 移除当前分享文件夹中的所有文件
+                            const newSelectedKeys = selectedRowKeys.filter(
+                              (id) => !fileIds.includes(id)
+                            );
+                            setSelectedRowKeys(newSelectedKeys);
+                          }
+                        }
+                      }}
+                      disabled={actionLoading}
+                    />
+                    <h3>分享文件夹 {group.shareKey}</h3>
+                  </div>
                   <div className="share-actions">
                     <div className="share-link">
                       分享链接：{`${baseUrl}/share/${group.shareKey}`}
