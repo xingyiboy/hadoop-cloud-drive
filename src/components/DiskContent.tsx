@@ -83,6 +83,41 @@ interface GroupedSharedFile {
   files: FileInfo[];
 }
 
+// 在 DiskContent 组件外部添加辅助函数
+const formatDuration = (milliseconds: number): string => {
+  const seconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours > 0) {
+    return `${hours}小时${minutes % 60}分钟`;
+  } else if (minutes > 0) {
+    return `${minutes}分钟${seconds % 60}秒`;
+  } else {
+    return `${seconds}秒`;
+  }
+};
+
+const calculateTaskStats = (tasks: any[]) => {
+  return {
+    successCount: tasks.filter(
+      (task) => task.status === "success" || task.status === "downloaded"
+    ).length,
+    failedCount: tasks.filter((task) => task.status === "failed").length,
+  };
+};
+
+const generateStatsMessage = (
+  stats: { successCount: number; failedCount: number },
+  duration: number,
+  type: "upload" | "download"
+): string => {
+  const actionText = type === "upload" ? "上传" : "下载";
+  return `${actionText}完成！用时：${formatDuration(duration)}，成功：${
+    stats.successCount
+  }个，失败：${stats.failedCount}个`;
+};
+
 const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 选中的文件keys
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
@@ -264,6 +299,9 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   const handleFileUpload = async (fileList: File[] | RcFile[]) => {
     const fileArray = Array.from(fileList);
     const uploadStore = useUploadStore.getState();
+    const startTime = Date.now();
+    let successCount = 0;
+    let failedCount = 0;
 
     // 生成任务并添加到上传队列
     const tasks = fileArray.map((file) => {
@@ -273,12 +311,12 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         file: file as File,
         catalogue: currentPath,
         deleteTask: () => handleDeleteUploadTask(taskId),
+        status: "pending",
       };
     });
 
     // 添加任务到上传队列
     uploadStore.addTasks(tasks);
-
     message.success(`已添加 ${fileArray.length} 个文件到上传队列`);
 
     // 开始逐个上传文件
@@ -309,6 +347,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
 
         if (res.code === 0) {
           uploadStore.updateTaskStatus(task.id, "success");
+          successCount++;
           // 刷新文件列表
           loadFileList();
         } else {
@@ -317,12 +356,23 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             "failed",
             res.msg || "上传失败"
           );
+          failedCount++;
         }
       } catch (error) {
         uploadStore.updateTaskStatus(task.id, "failed", "上传失败");
+        failedCount++;
         console.error("Upload error:", error);
       }
     }
+
+    // 计算统计信息
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    message.success(
+      `上传完成！用时：${formatDuration(
+        duration
+      )}，成功：${successCount}个，失败：${failedCount}个`
+    );
   };
 
   // 处理新建文件夹
@@ -608,6 +658,9 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
 
     const downloadStore = useDownloadStore.getState();
+    const startTime = Date.now();
+    let successCount = 0;
+    let failedCount = 0;
 
     try {
       // 获取所有选中文件的信息
@@ -761,6 +814,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           }, 100);
 
           downloadStore.updateTaskStatus(task.id, "downloaded");
+          successCount++;
 
           if (index < allSelectedFiles.length - 1) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -772,12 +826,21 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             "failed",
             error instanceof Error ? error.message : "下载失败"
           );
+          failedCount++;
         }
       }
+
+      // 计算统计信息
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      message.success(
+        `下载完成！用时：${formatDuration(
+          duration
+        )}，成功：${successCount}个，失败：${failedCount}个`
+      );
     } catch (error) {
       console.error("Batch download error:", error);
       message.error("批量下载失败");
-      // 确保加载动画被关闭
       setActionLoading(false);
     }
   };
