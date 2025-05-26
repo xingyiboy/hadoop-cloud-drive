@@ -33,7 +33,7 @@ import { useUploadStore } from "@/store/uploadStore";
 import { useDownloadStore } from "@/store/downloadStore";
 import dayjs from "dayjs";
 import request from "@/utils/request";
-import { shareFile, cancelShare } from "@/api/file";
+import { shareFile, cancelShare, batchShareFiles } from "@/api/file";
 
 const { Content } = Layout;
 
@@ -485,19 +485,16 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
 
     try {
-      // 逐个分享选中的文件
-      for (const id of selectedRowKeys) {
-        const res = await shareFile(id);
-        if (res.code !== 0) {
-          message.error(`分享文件(ID: ${id})失败: ${res.msg}`);
-        }
+      const res = await batchShareFiles(selectedRowKeys);
+      if (res.code === 0) {
+        message.success("批量分享成功");
+        // 清空选中状态
+        setSelectedRowKeys([]);
+        // 刷新文件列表
+        loadFileList(pagination.current, fileType);
+      } else {
+        message.error(res.msg || "批量分享失败");
       }
-
-      message.success("批量分享完成");
-      // 清空选中状态
-      setSelectedRowKeys([]);
-      // 刷新文件列表
-      loadFileList(pagination.current, fileType);
     } catch (error) {
       message.error("批量分享失败");
       console.error("Batch share error:", error);

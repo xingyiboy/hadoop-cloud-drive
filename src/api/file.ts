@@ -126,11 +126,18 @@ export const downloadFile = (params: {
 };
 
 // 分享文件
-export const shareFile = (id: string): Promise<ApiResponse<void>> => {
-  return request.post(`/admin-api/system/hadoop-file/share?id=${id}`);
-};
+export function shareFile(fileId: string) {
+  return request.post(`/admin-api/system/hadoop-file/share?id=${fileId}`);
+}
+
+// 批量分享文件
+export function batchShareFiles(fileIds: string[]) {
+  return request.post("/admin-api/system/hadoop-file/batch-share", fileIds);
+}
 
 // 取消分享文件
-export const cancelShare = (id: string): Promise<ApiResponse<void>> => {
-  return request.post(`/admin-api/system/hadoop-file/cancel-share?id=${id}`);
-};
+export function cancelShare(fileId: string) {
+  return request.post(
+    `/admin-api/system/hadoop-file/cancel-share?id=${fileId}`
+  );
+}
