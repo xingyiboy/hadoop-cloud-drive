@@ -12,7 +12,14 @@
 
     .left-buttons {
       display: flex;
+      align-items: center;
       gap: 8px;
+
+      .selected-count {
+        margin-left: 16px;
+        color: #1890ff;
+        font-size: 14px;
+      }
 
       .ant-btn {
         display: flex;

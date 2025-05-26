@@ -907,7 +907,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             />
           )}
           <span>文件名</span>
-          {selectedRowKeys.length > 0 && (
+          {viewType === "list" && selectedRowKeys.length > 0 && (
             <span className="selected-count">
               已选择 {selectedRowKeys.length} 个文件
             </span>
@@ -1098,7 +1098,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 disabled={actionLoading}
                 loading={actionLoading}
               >
-                恢复
+                恢复{" "}
+                {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
               </Button>
             )
           ) : fileType === 8 ? (
@@ -1110,7 +1111,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 disabled={actionLoading}
                 loading={actionLoading}
               >
-                取消分享
+                取消分享{" "}
+                {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
               </Button>
             )
           ) : (
@@ -1153,37 +1155,48 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               >
                 新建文件夹
               </Button>
+              {selectedRowKeys.length > 0 && (
+                <>
+                  <Button
+                    type="primary"
+                    icon={<CloudDownloadOutlined />}
+                    onClick={handleBatchDownload}
+                    disabled={actionLoading}
+                    loading={actionLoading}
+                  >
+                    下载{" "}
+                    {selectedRowKeys.length > 0 &&
+                      `(${selectedRowKeys.length})`}
+                  </Button>
+                  <Button
+                    icon={<ShareAltOutlined />}
+                    onClick={handleBatchShare}
+                    disabled={actionLoading}
+                    loading={actionLoading}
+                  >
+                    分享{" "}
+                    {selectedRowKeys.length > 0 &&
+                      `(${selectedRowKeys.length})`}
+                  </Button>
+                  <Button
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={handleBatchDelete}
+                    disabled={actionLoading}
+                    loading={actionLoading}
+                  >
+                    删除{" "}
+                    {selectedRowKeys.length > 0 &&
+                      `(${selectedRowKeys.length})`}
+                  </Button>
+                </>
+              )}
             </>
           )}
-          {selectedRowKeys.length > 0 && fileType !== 7 && fileType !== 8 && (
-            <>
-              <Button
-                type="primary"
-                icon={<CloudDownloadOutlined />}
-                onClick={handleBatchDownload}
-                disabled={actionLoading}
-                loading={actionLoading}
-              >
-                下载
-              </Button>
-              <Button
-                icon={<ShareAltOutlined />}
-                onClick={handleBatchShare}
-                disabled={actionLoading}
-                loading={actionLoading}
-              >
-                分享
-              </Button>
-              <Button
-                danger
-                icon={<DeleteOutlined />}
-                onClick={handleBatchDelete}
-                disabled={actionLoading}
-                loading={actionLoading}
-              >
-                删除
-              </Button>
-            </>
+          {viewType === "grid" && selectedRowKeys.length > 0 && (
+            <span className="selected-count">
+              已选择 {selectedRowKeys.length} 个文件
+            </span>
           )}
         </div>
         <div className="right-search">
