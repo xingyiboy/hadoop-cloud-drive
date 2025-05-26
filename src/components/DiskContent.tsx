@@ -572,7 +572,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         sortOrder: sortState.order || undefined,
       });
 
-      if (res.code === 0 && res.data) {
+      if (res.code === 0 && res.data?.list) {
         const pageFiles = res.data.list.filter((file: FileInfo) =>
           selectedRowKeys.includes(file.id.toString())
         );
@@ -588,11 +588,16 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     // 生成下载任务
     const tasks = allSelectedFiles.map((file) => {
       const taskId = `${file.name}-${Date.now()}-${Math.random()}`;
+      // 将文件大小从字符串转换为数字（MB）
+      const sizeInMB = file.size ? parseFloat(file.size) : 0;
+      // 将 MB 转换为字节
+      const sizeInBytes = sizeInMB * 1024 * 1024;
+
       return {
         id: taskId,
         file: {
           name: file.name,
-          size: parseFloat(file.size || "0"),
+          size: sizeInBytes, // 使用字节为单位的大小
           type: file.type,
         },
         status: "pending" as const,
