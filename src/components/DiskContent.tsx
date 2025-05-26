@@ -1027,17 +1027,53 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
-  // 添加复制链接函数
+  // 修改复制链接函数
   const copyShareLink = (shareKey: string) => {
     const shareUrl = `${baseUrl}/share/${shareKey}`;
-    navigator.clipboard
-      .writeText(shareUrl)
-      .then(() => {
-        message.success("分享链接已复制到剪贴板");
-      })
-      .catch(() => {
-        message.error("复制失败，请手动复制");
-      });
+
+    // 创建临时输入框
+    const tempInput = document.createElement("input");
+    tempInput.style.position = "fixed";
+    tempInput.style.opacity = "0";
+    tempInput.value = shareUrl;
+    document.body.appendChild(tempInput);
+
+    try {
+      // 优先使用 navigator.clipboard
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard
+          .writeText(shareUrl)
+          .then(() => {
+            message.success("分享链接已复制到剪贴板");
+          })
+          .catch(() => {
+            // 如果 clipboard API 失败，使用传统方法
+            fallbackCopy(tempInput);
+          });
+      } else {
+        // 在非 HTTPS 环境下直接使用传统方法
+        fallbackCopy(tempInput);
+      }
+    } catch (error) {
+      message.error("复制失败，请手动复制");
+      console.error("Copy error:", error);
+    } finally {
+      // 清理临时输入框
+      document.body.removeChild(tempInput);
+    }
+  };
+
+  // 添加传统复制方法
+  const fallbackCopy = (input: HTMLInputElement) => {
+    input.select();
+    input.setSelectionRange(0, 99999);
+    try {
+      document.execCommand("copy");
+      message.success("分享链接已复制到剪贴板");
+    } catch (err) {
+      message.error("复制失败，请手动复制");
+      console.error("Fallback copy error:", err);
+    }
   };
 
   // 表格列定义
