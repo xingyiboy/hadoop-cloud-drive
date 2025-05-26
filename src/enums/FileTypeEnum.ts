@@ -7,6 +7,7 @@ export enum FileType {
   PLANT = 4,
   OTHER = 5,
   RECYCLE = 7,
+  SHARE = 8,
 }
 
 export const FileTypeMap: { [key in FileType]: string } = {
@@ -18,6 +19,7 @@ export const FileTypeMap: { [key in FileType]: string } = {
   [FileType.PLANT]: "种子",
   [FileType.OTHER]: "其他",
   [FileType.RECYCLE]: "回收站",
+  [FileType.SHARE]: "我的分享",
 };
 
 // 文件扩展名映射到文件类型

@@ -104,6 +104,11 @@ const SiderMain: React.FC<SiderMainProps> = ({
       icon: <DeleteOutlined />,
       label: "回收站",
     },
+    {
+      key: "share",
+      icon: <ShareAltOutlined />,
+      label: "我的分享",
+    },
   ];
 
   // 上传页面的菜单项
@@ -149,8 +154,6 @@ const SiderMain: React.FC<SiderMainProps> = ({
     switch (activeTab) {
       case 1:
         return diskMenuItems;
-      case 2:
-        return shareMenuItems;
       case 3:
         return uploadMenuItems;
       case 4:
@@ -171,6 +174,7 @@ const SiderMain: React.FC<SiderMainProps> = ({
       "audio",
       "other",
       "recycle",
+      "share",
     ];
     if (diskKeys.includes(key)) {
       setSelectedMenuKey(key);
@@ -179,6 +183,8 @@ const SiderMain: React.FC<SiderMainProps> = ({
           onFileTypeChange(undefined);
         } else if (key === "recycle") {
           onFileTypeChange(FileType.RECYCLE);
+        } else if (key === "share") {
+          onFileTypeChange(FileType.SHARE);
         } else {
           onFileTypeChange(
             FileType[key.toUpperCase() as keyof typeof FileType]

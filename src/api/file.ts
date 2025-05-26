@@ -40,7 +40,8 @@ export interface FileListParams {
   pageNo?: number;
   pageSize?: number;
   sortField?: string;
-  sortOrder?: string | null;
+  sortOrder?: string;
+  excludeShared?: boolean;
 }
 
 export interface FileListResponse {
@@ -122,4 +123,14 @@ export const downloadFile = (params: {
       onDownloadProgress: params.onDownloadProgress,
     }
   );
+};
+
+// 分享文件
+export const shareFile = (id: string): Promise<ApiResponse<void>> => {
+  return request.post(`/admin-api/system/hadoop-file/share?id=${id}`);
+};
+
+// 取消分享文件
+export const cancelShare = (id: string): Promise<ApiResponse<void>> => {
+  return request.post(`/admin-api/system/hadoop-file/cancel-share?id=${id}`);
 };

@@ -33,6 +33,7 @@ import { useUploadStore } from "@/store/uploadStore";
 import { useDownloadStore } from "@/store/downloadStore";
 import dayjs from "dayjs";
 import request from "@/utils/request";
+import { shareFile, cancelShare } from "@/api/file";
 
 const { Content } = Layout;
 
@@ -118,6 +119,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         pageSize: size,
         sortField: sortState.field || undefined,
         sortOrder: sortState.order || undefined,
+        excludeShared: type !== 8, // 如果不是分享页面，则排除已分享的文件
       });
       if (res.code === 0 && res.data) {
         const data = (res as unknown as ApiResponse<FileListResponse>).data;
@@ -458,14 +460,92 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
+  // 处理单个文件分享
+  const handleSingleShare = async (record: FileInfo) => {
+    try {
+      const res = await shareFile(record.id.toString());
+      if (res.code === 0) {
+        message.success("分享成功");
+        // 刷新文件列表
+        loadFileList(pagination.current, fileType);
+      } else {
+        message.error(res.msg || "分享失败");
+      }
+    } catch (error) {
+      message.error("分享失败");
+      console.error("Share error:", error);
+    }
+  };
+
   // 处理批量分享
-  const handleBatchShare = () => {
+  const handleBatchShare = async () => {
     if (selectedRowKeys.length === 0) {
       message.warning("请选择要分享的文件");
       return;
     }
-    // TODO: 实现批量分享逻辑
-    message.info(`准备分享 ${selectedRowKeys.length} 个文件`);
+
+    try {
+      // 逐个分享选中的文件
+      for (const id of selectedRowKeys) {
+        const res = await shareFile(id);
+        if (res.code !== 0) {
+          message.error(`分享文件(ID: ${id})失败: ${res.msg}`);
+        }
+      }
+
+      message.success("批量分享完成");
+      // 清空选中状态
+      setSelectedRowKeys([]);
+      // 刷新文件列表
+      loadFileList(pagination.current, fileType);
+    } catch (error) {
+      message.error("批量分享失败");
+      console.error("Batch share error:", error);
+    }
+  };
+
+  // 处理取消分享
+  const handleCancelShare = async (record: FileInfo) => {
+    try {
+      const res = await cancelShare(record.id.toString());
+      if (res.code === 0) {
+        message.success("取消分享成功");
+        // 刷新文件列表
+        loadFileList(pagination.current, fileType);
+      } else {
+        message.error(res.msg || "取消分享失败");
+      }
+    } catch (error) {
+      message.error("取消分享失败");
+      console.error("Cancel share error:", error);
+    }
+  };
+
+  // 处理批量取消分享
+  const handleBatchCancelShare = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("请选择要取消分享的文件");
+      return;
+    }
+
+    try {
+      // 逐个取消分享选中的文件
+      for (const id of selectedRowKeys) {
+        const res = await cancelShare(id);
+        if (res.code !== 0) {
+          message.error(`取消分享文件(ID: ${id})失败: ${res.msg}`);
+        }
+      }
+
+      message.success("批量取消分享完成");
+      // 清空选中状态
+      setSelectedRowKeys([]);
+      // 刷新文件列表
+      loadFileList(pagination.current, fileType);
+    } catch (error) {
+      message.error("批量取消分享失败");
+      console.error("Batch cancel share error:", error);
+    }
   };
 
   // 修改删除处理函数
@@ -509,7 +589,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       downloadStore.updateTaskStatus(taskId, "downloading");
 
       // 调用下载接口
-      const response = await downloadFile({
+      const response = (await downloadFile({
         fileId: record.id.toString(),
         onDownloadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -519,7 +599,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             downloadStore.updateTaskProgress(taskId, progress);
           }
         },
-      });
+      })) as DownloadResponse;
 
       // 检查响应数据
       if (!response.data) {
@@ -528,9 +608,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
 
       // 获取文件名
       let filename = record.name;
-      const contentDisposition = (response as any).headers?.[
-        "content-disposition"
-      ];
+      const contentDisposition = response.headers["content-disposition"];
       if (contentDisposition) {
         const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
         if (matches && matches[1]) {
@@ -563,12 +641,6 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         error instanceof Error ? error.message : "下载失败"
       );
     }
-  };
-
-  // 处理单个文件分享
-  const handleSingleShare = (record: FileInfo) => {
-    message.info(`准备分享文件：${record.name}`);
-    // TODO: 实现单个文件分享逻辑
   };
 
   // 处理单个文件删除
@@ -726,6 +798,19 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                     handleSingleRestore(record);
                   }}
                 />
+              ) : fileType === 8 ? (
+                selectedRowKeys.length > 0 && (
+                  <Button
+                    type="primary"
+                    icon={<UndoOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBatchCancelShare();
+                    }}
+                  >
+                    取消分享
+                  </Button>
+                )
               ) : (
                 <>
                   <CloudDownloadOutlined
@@ -792,6 +877,16 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 恢复
               </Button>
             )
+          ) : fileType === 8 ? (
+            selectedRowKeys.length > 0 && (
+              <Button
+                type="primary"
+                icon={<UndoOutlined />}
+                onClick={handleBatchCancelShare}
+              >
+                取消分享
+              </Button>
+            )
           ) : (
             <>
               <Upload
@@ -824,25 +919,18 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               </Button>
             </>
           )}
-          {selectedRowKeys.length > 0 && (
+          {selectedRowKeys.length > 0 && fileType !== 7 && fileType !== 8 && (
             <>
-              {fileType !== 7 && (
-                <>
-                  <Button
-                    type="primary"
-                    icon={<CloudDownloadOutlined />}
-                    onClick={handleBatchDownload}
-                  >
-                    下载
-                  </Button>
-                  <Button
-                    icon={<ShareAltOutlined />}
-                    onClick={handleBatchShare}
-                  >
-                    分享
-                  </Button>
-                </>
-              )}
+              <Button
+                type="primary"
+                icon={<CloudDownloadOutlined />}
+                onClick={handleBatchDownload}
+              >
+                下载
+              </Button>
+              <Button icon={<ShareAltOutlined />} onClick={handleBatchShare}>
+                分享
+              </Button>
               <Button
                 danger
                 icon={<DeleteOutlined />}
