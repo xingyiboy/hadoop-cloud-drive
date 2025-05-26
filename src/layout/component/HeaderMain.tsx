@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-05-09 12:03:12
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-26 10:19:34
+ * @LastEditTime: 2025-05-26 19:51:43
  * @FilePath: \CloudDiskWeb\src\layout\component\HeaderMain.tsx
  */
 import { useNavigate } from "react-router-dom";
@@ -217,7 +217,17 @@ const HeaderMain: React.FC<HeaderMainProps> = ({ activeTab, onTabChange }) => {
       style={{ display: "flex", alignItems: "center" }}
     >
       <div className="left">
-        <div className="logo">Hadoop</div>
+        <div className="logo">
+          <img
+            src="https://tse2-mm.cn.bing.net/th/id/OIP-C.sSgrwKorjXKJfCZlF_ImcgAAAA?w=197&h=197&c=7&r=0&o=7&cb=iwp2&dpr=1.5&pid=1.7&rm=3"
+            alt="Hadoop Logo"
+            style={{
+              height: "40px",
+              width: "auto",
+              objectFit: "contain",
+            }}
+          />
+        </div>
         <div className="logo-title">云端网盘</div>
         <Menu
           className="menu"
@@ -256,9 +266,6 @@ const HeaderMain: React.FC<HeaderMainProps> = ({ activeTab, onTabChange }) => {
           </Dropdown>
           <div>|</div>
           <div>当前目录: {currentPath}</div>
-          <Button shape="round" danger type="primary">
-            会员中心
-          </Button>
         </Space>
       </div>
 

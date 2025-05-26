@@ -83,7 +83,7 @@ function Register() {
       <div className="header">
         <div className="left">
           <div className="logo">Hadoop</div>
-          <div className="name">青软实训</div>
+          <div className="name">云端网盘</div>
           <div className="shu">|</div>
           <div className="title"> 注册云端网盘账号</div>
         </div>
