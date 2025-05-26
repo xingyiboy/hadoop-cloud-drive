@@ -88,12 +88,13 @@ export const deleteFile = (id: string): Promise<ApiResponse<void>> => {
 // 移动文件或目录
 export const moveFile = (
   id: number,
-  newCatalogue: string
+  targetPath: string
 ): Promise<ApiResponse<void>> => {
-  return request.put("/admin-api/system/hadoop-file/move", {
-    id,
-    newCatalogue,
-  });
+  return request.post(
+    `/admin-api/system/hadoop-file/move?id=${id}&targetPath=${encodeURIComponent(
+      targetPath
+    )}`
+  );
 };
 
 /**

@@ -10,6 +10,8 @@ import {
   Spin,
   Dropdown,
   Menu,
+  Modal,
+  Tree,
 } from "antd";
 import type { RcFile } from "antd/lib/upload";
 import type { SorterResult } from "antd/lib/table/interface";
@@ -26,13 +28,21 @@ import {
   UndoOutlined,
   CopyOutlined,
   LoadingOutlined,
+  FolderOutlined,
+  ScissorOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import "../layout/style/content-main.scss";
 import BreadcrumbNav from "./BreadcrumbNav";
 import CreateFolderModal from "./CreateFolderModal";
 import { FileType, FileTypeMap, getFileTypeByExt } from "../enums/FileTypeEnum";
-import { createFile, getFileList, downloadFile, deleteFile } from "@/api/file";
+import {
+  createFile,
+  getFileList,
+  downloadFile,
+  deleteFile,
+  moveFile,
+} from "@/api/file";
 import { FileInfo } from "@/types/file";
 import { useUploadStore } from "@/store/uploadStore";
 import { useDownloadStore } from "@/store/downloadStore";
@@ -175,6 +185,11 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   const [rightClickedFile, setRightClickedFile] = useState<FileInfo | null>(
     null
   );
+  // 在 DiskContent 组件内添加新的状态
+  const [moveModalVisible, setMoveModalVisible] = useState<boolean>(false);
+  const [moveTargetPath, setMoveTargetPath] = useState<string>("/");
+  const [moveFileInfo, setMoveFileInfo] = useState<FileInfo | null>(null);
+  const [folderTree, setFolderTree] = useState<any[]>([]);
 
   const location = useLocation();
   const baseUrl = window.location.origin;
@@ -1174,7 +1189,136 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     };
   }, [contextMenuPosition]);
 
-  // 右键菜单组件
+  // 添加获取所有文件夹的函数
+  const getAllFolders = async (
+    parentPath: string = "/"
+  ): Promise<FileInfo[]> => {
+    const folders: FileInfo[] = [];
+    try {
+      const res = await getFileList({
+        type: FileType.DIRECTORY,
+        pageSize: 100,
+        pageNo: 1,
+        catalogue: parentPath,
+      });
+
+      if (res.code === 0 && res.data) {
+        const currentFolders = (res.data as any).list || [];
+        folders.push(...currentFolders);
+
+        // 递归获取每个文件夹的子文件夹
+        for (const folder of currentFolders) {
+          const subPath =
+            parentPath === "/"
+              ? `/${folder.name}`
+              : `${parentPath}/${folder.name}`;
+          const subFolders = await getAllFolders(subPath);
+          folders.push(...subFolders);
+        }
+      }
+    } catch (error) {
+      console.error("获取文件夹失败:", error);
+    }
+    return folders;
+  };
+
+  // 修改获取文件夹树的函数
+  const getFolderTree = async () => {
+    try {
+      const folders = await getAllFolders();
+      const tree = buildFolderTree(folders);
+      setFolderTree(tree);
+    } catch (error) {
+      console.error("获取文件夹树失败:", error);
+      message.error("获取文件夹树失败");
+    }
+  };
+
+  // 修改构建文件夹树的函数
+  const buildFolderTree = (folders: FileInfo[]) => {
+    const root = {
+      title: "根目录",
+      key: "/",
+      children: [] as any[],
+    };
+
+    // 按照路径长度排序，确保父文件夹在子文件夹之前处理
+    folders.sort((a, b) => {
+      const pathA = (a.catalogue === "/" ? "" : a.catalogue) + "/" + a.name;
+      const pathB = (b.catalogue === "/" ? "" : b.catalogue) + "/" + b.name;
+      return pathA.split("/").length - pathB.split("/").length;
+    });
+
+    folders.forEach((folder) => {
+      const path = folder.catalogue === "/" ? "" : folder.catalogue;
+      const fullPath = path + "/" + folder.name;
+      const node = {
+        title: folder.name,
+        key: fullPath,
+        children: [] as any[],
+      };
+
+      // 找到父节点并添加当前节点
+      let parentPath = path || "/";
+      let parent = root;
+
+      if (parentPath !== "/") {
+        const pathParts = parentPath.split("/").filter(Boolean);
+        for (const part of pathParts) {
+          const found = findNode(root, part);
+          if (found) {
+            parent = found;
+          }
+        }
+      }
+      parent.children.push(node);
+    });
+
+    return [root];
+  };
+
+  // 修改查找节点的辅助函数
+  const findNode = (node: any, name: string): any => {
+    if (node.title === name) return node;
+    if (node.children) {
+      for (const child of node.children) {
+        const found = findNode(child, name);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // 添加处理移动文件的函数
+  const handleMove = async (record: FileInfo) => {
+    setMoveFileInfo(record);
+    await getFolderTree();
+    setMoveModalVisible(true);
+  };
+
+  // 添加确认移动的函数
+  const handleMoveConfirm = async () => {
+    if (!moveFileInfo || !moveTargetPath) return;
+
+    try {
+      setActionLoading(true);
+      const res = await moveFile(Number(moveFileInfo.id), moveTargetPath);
+      if (res.code === 0) {
+        message.success("移动成功");
+        loadFileList();
+        setMoveModalVisible(false);
+      } else {
+        message.error(res.msg || "移动失败");
+      }
+    } catch (error) {
+      message.error("移动失败");
+      console.error("Move error:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // 修改右键菜单组件
   const contextMenu = rightClickedFile && (
     <Menu
       style={{
@@ -1187,12 +1331,15 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         if (key === "rename") {
           setEditingFileId(rightClickedFile.id.toString());
           setEditingFileName(rightClickedFile.name);
+        } else if (key === "move") {
+          handleMove(rightClickedFile);
         }
         setContextMenuPosition(null);
         setRightClickedFile(null);
       }}
     >
       <Menu.Item key="rename">重命名</Menu.Item>
+      <Menu.Item key="move">移动到</Menu.Item>
     </Menu>
   );
 
@@ -1819,6 +1966,25 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         </div>
       )}
       {contextMenu}
+      <Modal
+        title="移动到"
+        open={moveModalVisible}
+        onOk={handleMoveConfirm}
+        onCancel={() => setMoveModalVisible(false)}
+        confirmLoading={actionLoading}
+      >
+        <Tree
+          treeData={folderTree}
+          defaultExpandAll
+          icon={<FolderOutlined />}
+          selectedKeys={[moveTargetPath]}
+          onSelect={(selectedKeys) => {
+            if (selectedKeys.length > 0) {
+              setMoveTargetPath(selectedKeys[0].toString());
+            }
+          }}
+        />
+      </Modal>
     </Content>
   );
 };
