@@ -215,6 +215,9 @@
       padding: 12px 16px;
       background: #f5f5f5;
       border-bottom: 1px solid #e8e8e8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
 
       h3 {
         margin: 0;
@@ -226,6 +229,30 @@
         &:before {
           content: "📁";
           margin-right: 8px;
+        }
+      }
+
+      .share-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .share-link {
+          color: #666;
+          font-size: 14px;
+          background: #fff;
+          padding: 4px 12px;
+          border-radius: 4px;
+          border: 1px solid #e8e8e8;
+        }
+
+        .ant-btn-link {
+          padding: 4px 8px;
+          height: auto;
+
+          .anticon {
+            font-size: 14px;
+          }
         }
       }
     }

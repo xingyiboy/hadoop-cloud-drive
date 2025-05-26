@@ -21,6 +21,7 @@ import {
   BarsOutlined,
   DeleteOutlined,
   UndoOutlined,
+  CopyOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import "../layout/style/content-main.scss";
@@ -34,6 +35,7 @@ import { useDownloadStore } from "@/store/downloadStore";
 import dayjs from "dayjs";
 import request from "@/utils/request";
 import { shareFile, cancelShare, batchShareFiles } from "@/api/file";
+import { useLocation } from "react-router-dom";
 
 const { Content } = Layout;
 
@@ -112,6 +114,9 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   const [groupedSharedFiles, setGroupedSharedFiles] = useState<
     GroupedSharedFile[]
   >([]);
+
+  const location = useLocation();
+  const baseUrl = window.location.origin;
 
   // 加载文件列表
   const loadFileList = async (
@@ -770,6 +775,19 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
+  // 添加复制链接函数
+  const copyShareLink = (shareKey: string) => {
+    const shareUrl = `${baseUrl}/share/${shareKey}`;
+    navigator.clipboard
+      .writeText(shareUrl)
+      .then(() => {
+        message.success("分享链接已复制到剪贴板");
+      })
+      .catch(() => {
+        message.error("复制失败，请手动复制");
+      });
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -1016,12 +1034,23 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       </div>
       <div className="table-container">
         {fileType === 8 ? (
-          // 分享文件页面使用分组显示
           <div className="shared-files-container">
             {groupedSharedFiles.map((group) => (
               <div key={group.shareKey} className="shared-group">
                 <div className="shared-group-header">
                   <h3>分享文件夹 {group.shareKey}</h3>
+                  <div className="share-actions">
+                    <div className="share-link">
+                      分享链接：{`${baseUrl}/share/${group.shareKey}`}
+                    </div>
+                    <Button
+                      type="link"
+                      icon={<CopyOutlined />}
+                      onClick={() => copyShareLink(group.shareKey)}
+                    >
+                      复制链接
+                    </Button>
+                  </div>
                 </div>
                 <Table
                   columns={columns}
@@ -1036,7 +1065,6 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             ))}
           </div>
         ) : (
-          // 其他页面保持原有表格显示
           <Table
             columns={columns}
             dataSource={fileList}

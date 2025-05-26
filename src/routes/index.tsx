@@ -34,22 +34,6 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
 // 路由配置
 const routes = [
   {
-    path: "/login",
-    element: (
-      <Suspense fallback={<div>加载中...</div>}>
-        <Login />
-      </Suspense>
-    ),
-  },
-  {
-    path: "/register",
-    element: (
-      <Suspense fallback={<div>加载中...</div>}>
-        <Register />
-      </Suspense>
-    ),
-  },
-  {
     path: "/",
     element: (
       <PrivateRoute>
@@ -126,6 +110,22 @@ const routes = [
         ),
       },
     ],
+  },
+  {
+    path: "/login",
+    element: (
+      <Suspense fallback={<div>加载中...</div>}>
+        <Login />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/register",
+    element: (
+      <Suspense fallback={<div>加载中...</div>}>
+        <Register />
+      </Suspense>
+    ),
   },
   {
     path: "*",
