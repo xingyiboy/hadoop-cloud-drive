@@ -119,6 +119,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     GroupedSharedFile[]
   >([]);
   const [actionLoading, setActionLoading] = useState(false);
+  // 添加视图类型状态
+  const [viewType, setViewType] = useState<"list" | "grid">("list");
 
   const location = useLocation();
   const baseUrl = window.location.origin;
@@ -1082,7 +1084,9 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   }, [fileType, searchKeyword]);
 
   return (
-    <Content className={`content-main ${actionLoading ? "loading" : ""}`}>
+    <Content
+      className={`content-main ${actionLoading ? "loading" : ""} ${viewType}`}
+    >
       <div className="operation-bar">
         <div className="left-buttons">
           {fileType === 7 ? (
@@ -1193,8 +1197,14 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             disabled={actionLoading}
           />
           <div className="view-switch">
-            <BarsOutlined className="active" />
-            <AppstoreOutlined />
+            <BarsOutlined
+              className={viewType === "list" ? "active" : ""}
+              onClick={() => !actionLoading && setViewType("list")}
+            />
+            <AppstoreOutlined
+              className={viewType === "grid" ? "active" : ""}
+              onClick={() => !actionLoading && setViewType("grid")}
+            />
           </div>
         </div>
       </div>
@@ -1288,7 +1298,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               </div>
             ))}
           </div>
-        ) : (
+        ) : viewType === "list" ? (
           <Table
             columns={columns}
             dataSource={fileList}
@@ -1298,6 +1308,105 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             rowKey="id"
             onChange={handleTableChange}
           />
+        ) : (
+          <div className="grid-view">
+            {fileList.map((file) => (
+              <div
+                key={file.id}
+                className={`grid-item ${
+                  selectedRowKeys.includes(file.id.toString()) ? "selected" : ""
+                }`}
+                onClick={() => !actionLoading && handleFileClick(file)}
+              >
+                <div className="grid-item-checkbox">
+                  <Checkbox
+                    checked={selectedRowKeys.includes(file.id.toString())}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!actionLoading) {
+                        handleSelect(
+                          !selectedRowKeys.includes(file.id.toString()),
+                          file.id.toString()
+                        );
+                      }
+                    }}
+                    disabled={actionLoading}
+                  />
+                </div>
+                <div className="grid-item-icon">{getFileIcon(file.type)}</div>
+                <div className="grid-item-name" title={file.name}>
+                  {file.name}
+                </div>
+                <div className="grid-item-info">
+                  <span>{file.size ? `${file.size} MB` : "-"}</span>
+                  <span>{formatDateTime(Number(file.createTime))}</span>
+                </div>
+                <div className="grid-item-actions">
+                  {fileType === 7 ? (
+                    <Button
+                      type="link"
+                      icon={<UndoOutlined />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!actionLoading) {
+                          handleSingleRestore(file);
+                        }
+                      }}
+                      disabled={actionLoading}
+                      loading={actionLoading}
+                    >
+                      恢复
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        type="link"
+                        icon={<CloudDownloadOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!actionLoading) {
+                            handleSingleDownload(file);
+                          }
+                        }}
+                        disabled={actionLoading}
+                      >
+                        下载
+                      </Button>
+                      <Button
+                        type="link"
+                        icon={<ShareAltOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!actionLoading) {
+                            handleSingleShare(file);
+                          }
+                        }}
+                        disabled={actionLoading}
+                        loading={actionLoading}
+                      >
+                        分享
+                      </Button>
+                      <Button
+                        type="link"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!actionLoading) {
+                            handleSingleDelete(file);
+                          }
+                        }}
+                        disabled={actionLoading}
+                        loading={actionLoading}
+                      >
+                        删除
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
       <div

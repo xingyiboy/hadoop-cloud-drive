@@ -44,15 +44,22 @@
 
       .view-switch {
         display: flex;
+        align-items: center;
         gap: 8px;
+        margin-left: 16px;
 
         .anticon {
-          font-size: 18px;
-          color: #666;
+          font-size: 20px;
           cursor: pointer;
+          color: #999;
+          transition: color 0.3s;
+
+          &:hover {
+            color: #1890ff;
+          }
 
           &.active {
-            color: #1677ff;
+            color: #1890ff;
           }
         }
       }
@@ -369,5 +376,102 @@
         }
       }
     }
+  }
+}
+
+.grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 16px;
+
+  .grid-item {
+    position: relative;
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid #f0f0f0;
+
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+      .grid-item-actions {
+        opacity: 1;
+      }
+    }
+
+    &.selected {
+      background: #e6f7ff;
+      border-color: #1890ff;
+    }
+
+    .grid-item-checkbox {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 1;
+    }
+
+    .grid-item-icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 80px;
+      margin-bottom: 8px;
+
+      span {
+        font-size: 40px;
+      }
+    }
+
+    .grid-item-name {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #333;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .grid-item-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 8px;
+    }
+
+    .grid-item-actions {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 0 0 8px 8px;
+
+      .ant-btn {
+        padding: 0 8px;
+        height: 24px;
+        font-size: 12px;
+      }
+    }
+  }
+}
+
+// 在移动设备上调整网格布局
+@media screen and (max-width: 768px) {
+  .grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+    padding: 8px;
   }
 }
