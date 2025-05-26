@@ -461,6 +461,99 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     message.success("已删除下载任务");
   };
 
+  // 处理单个文件下载
+  const handleSingleDownload = async (record: FileInfo) => {
+    const downloadStore = useDownloadStore.getState();
+    const taskId = `${record.name}-${Date.now()}-${Math.random()}`;
+
+    // 创建下载任务
+    const task = {
+      id: taskId,
+      file: {
+        name: record.name,
+        size: parseFloat(record.size || "0"),
+        type: record.type,
+      },
+      status: "pending" as const,
+      progress: 0,
+      error: undefined,
+      deleteTask: () => handleDeleteDownloadTask(taskId),
+    };
+
+    // 添加任务到下载队列
+    downloadStore.addTasks([task]);
+    message.success(`已添加 ${record.name} 到下载队列`);
+
+    try {
+      // 更新任务状态为下载中
+      downloadStore.updateTaskStatus(taskId, "downloading");
+
+      // 调用下载接口
+      const response = await downloadFile({
+        fileId: record.id.toString(),
+        onDownloadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const progress = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            );
+            downloadStore.updateTaskProgress(taskId, progress);
+          }
+        },
+      });
+
+      if (!response.data) {
+        throw new Error("下载失败：未收到文件数据");
+      }
+
+      // 获取文件名
+      let filename = record.name;
+      const contentDisposition = response.headers["content-disposition"];
+      if (contentDisposition) {
+        const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
+        if (matches && matches[1]) {
+          filename = decodeURIComponent(matches[1]);
+        }
+      }
+
+      // 创建下载链接并触发下载
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+
+      // 清理
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      // 更新任务状态为已完成
+      downloadStore.updateTaskStatus(taskId, "downloaded");
+    } catch (error) {
+      console.error("Download error:", error);
+      downloadStore.updateTaskStatus(
+        taskId,
+        "failed",
+        error instanceof Error ? error.message : "下载失败"
+      );
+    }
+  };
+
+  // 处理单个文件分享
+  const handleSingleShare = (record: FileInfo) => {
+    message.info(`准备分享文件：${record.name}`);
+    // TODO: 实现单个文件分享逻辑
+  };
+
+  // 处理单个文件删除
+  const handleSingleDelete = (record: FileInfo) => {
+    message.info(`准备删除文件：${record.name}`);
+    // TODO: 实现单个文件删除逻辑
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -484,6 +577,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       ),
       dataIndex: "name",
       key: "name",
+      width: 500,
+      ellipsis: true,
       sorter: true,
       onHeaderCell: () => ({
         onClick: (e: React.MouseEvent) => {
@@ -512,6 +607,29 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           >
             {getFileIcon(record.type)}
             <span className="file-name-text">{text}</span>
+            <div className="file-actions">
+              <CloudDownloadOutlined
+                className="action-icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSingleDownload(record);
+                }}
+              />
+              <ShareAltOutlined
+                className="action-icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSingleShare(record);
+                }}
+              />
+              <DeleteOutlined
+                className="action-icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSingleDelete(record);
+                }}
+              />
+            </div>
           </div>
         </div>
       ),
