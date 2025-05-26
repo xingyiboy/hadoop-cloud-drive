@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Table, message, Button, Checkbox } from "antd";
-import { CloudDownloadOutlined } from "@ant-design/icons";
+import { Modal, Table, message, Button, Checkbox, Tree } from "antd";
+import {
+  CloudDownloadOutlined,
+  FolderOutlined,
+  SaveOutlined,
+} from "@ant-design/icons";
 import request from "@/utils/request";
 import { FileType, FileTypeMap } from "@/enums/FileTypeEnum";
 import type { FileInfo } from "@/types/file";
 import "./style/share-download-modal.scss";
+import { getFileList } from "@/api/file";
 
 interface ShareDownloadModalProps {
   shareKey: string;
@@ -21,6 +26,10 @@ const ShareDownloadModal: React.FC<ShareDownloadModalProps> = ({
   const [fileList, setFileList] = useState<FileInfo[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [downloadLoading, setDownloadLoading] = useState(false);
+  const [saveModalVisible, setSaveModalVisible] = useState(false);
+  const [folderTree, setFolderTree] = useState<any[]>([]);
+  const [targetPath, setTargetPath] = useState<string>("/");
+  const [saveLoading, setSaveLoading] = useState(false);
 
   // 获取文件图标
   const getFileIcon = (type: FileType) => {
@@ -241,6 +250,178 @@ const ShareDownloadModal: React.FC<ShareDownloadModalProps> = ({
     },
   ];
 
+  // 添加获取所有文件夹的函数
+  const getAllFolders = async (
+    parentPath: string = "/"
+  ): Promise<FileInfo[]> => {
+    const folders: FileInfo[] = [];
+    try {
+      const res = await getFileList({
+        type: FileType.DIRECTORY,
+        pageSize: 100,
+        pageNo: 1,
+        catalogue: parentPath,
+      });
+
+      if (res.code === 0 && res.data) {
+        const currentFolders = (res.data as any).list || [];
+        folders.push(...currentFolders);
+
+        // 递归获取每个文件夹的子文件夹
+        for (const folder of currentFolders) {
+          const subPath =
+            parentPath === "/"
+              ? `/${folder.name}`
+              : `${parentPath}/${folder.name}`;
+          const subFolders = await getAllFolders(subPath);
+          folders.push(...subFolders);
+        }
+      }
+    } catch (error) {
+      console.error("获取文件夹失败:", error);
+    }
+    return folders;
+  };
+
+  // 添加构建文件夹树的函数
+  const buildFolderTree = (folders: FileInfo[]) => {
+    const root = {
+      title: "根目录",
+      key: "/",
+      children: [] as any[],
+    };
+
+    folders.sort((a, b) => {
+      const pathA = (a.catalogue === "/" ? "" : a.catalogue) + "/" + a.name;
+      const pathB = (b.catalogue === "/" ? "" : b.catalogue) + "/" + b.name;
+      return pathA.split("/").length - pathB.split("/").length;
+    });
+
+    folders.forEach((folder) => {
+      const path = folder.catalogue === "/" ? "" : folder.catalogue;
+      const fullPath = path + "/" + folder.name;
+      const node = {
+        title: folder.name,
+        key: fullPath,
+        children: [] as any[],
+      };
+
+      let parentPath = path || "/";
+      let parent = root;
+
+      if (parentPath !== "/") {
+        const pathParts = parentPath.split("/").filter(Boolean);
+        for (const part of pathParts) {
+          const found = findNode(root, part);
+          if (found) {
+            parent = found;
+          }
+        }
+      }
+      parent.children.push(node);
+    });
+
+    return [root];
+  };
+
+  // 添加查找节点的辅助函数
+  const findNode = (node: any, name: string): any => {
+    if (node.title === name) return node;
+    if (node.children) {
+      for (const child of node.children) {
+        const found = findNode(child, name);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // 添加获取文件夹树的函数
+  const getFolderTree = async () => {
+    try {
+      const folders = await getAllFolders();
+      const tree = buildFolderTree(folders);
+      setFolderTree(tree);
+    } catch (error) {
+      console.error("获取文件夹树失败:", error);
+      message.error("获取文件夹树失败");
+    }
+  };
+
+  // 添加保存文件的函数
+  const handleSaveFiles = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("请选择要保存的文件");
+      return;
+    }
+
+    try {
+      setSaveLoading(true);
+      const selectedFiles = fileList.filter((file) =>
+        selectedRowKeys.includes(file.id.toString())
+      );
+
+      // 调用保存文件的 API
+      const res = await request.post(
+        "/admin-api/system/hadoop-file/save-shared",
+        {
+          shareKey,
+          fileIds: selectedRowKeys,
+          targetPath,
+        }
+      );
+
+      if (res.code === 0) {
+        message.success(`成功保存 ${selectedFiles.length} 个文件`);
+        setSaveModalVisible(false);
+        setSelectedRowKeys([]);
+      } else {
+        message.error(res.msg || "保存失败");
+      }
+    } catch (error) {
+      console.error("Save files error:", error);
+      message.error("保存文件失败");
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  // 添加打开保存模态框的函数
+  const handleOpenSaveModal = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("请选择要保存的文件");
+      return;
+    }
+    await getFolderTree();
+    setSaveModalVisible(true);
+  };
+
+  // 修改 Modal 的 footer
+  const modalFooter = [
+    <Button key="cancel" onClick={onCancel}>
+      取消
+    </Button>,
+    <Button
+      key="save"
+      type="primary"
+      icon={<SaveOutlined />}
+      onClick={handleOpenSaveModal}
+      disabled={selectedRowKeys.length === 0 || downloadLoading}
+    >
+      保存到我的文件夹
+    </Button>,
+    <Button
+      key="download"
+      type="primary"
+      icon={<CloudDownloadOutlined />}
+      onClick={handleBatchDownload}
+      disabled={selectedRowKeys.length === 0 || downloadLoading}
+      loading={downloadLoading}
+    >
+      下载选中文件
+    </Button>,
+  ];
+
   useEffect(() => {
     if (visible && shareKey) {
       loadShareFiles();
@@ -249,38 +430,47 @@ const ShareDownloadModal: React.FC<ShareDownloadModalProps> = ({
   }, [visible, shareKey]);
 
   return (
-    <Modal
-      title={`分享文件 - ${shareKey}`}
-      open={visible}
-      onCancel={onCancel}
-      footer={[
-        <Button key="cancel" onClick={onCancel}>
-          取消
-        </Button>,
-        <Button
-          key="download"
-          type="primary"
-          icon={<CloudDownloadOutlined />}
-          onClick={handleBatchDownload}
-          disabled={selectedRowKeys.length === 0 || downloadLoading}
-          loading={downloadLoading}
-        >
-          下载选中文件
-        </Button>,
-      ]}
-      width={800}
-      destroyOnClose
-      className="share-download-modal"
-    >
-      <Table
-        columns={columns}
-        dataSource={fileList}
-        pagination={false}
-        loading={loading}
-        rowKey="id"
-        size="small"
-      />
-    </Modal>
+    <>
+      <Modal
+        title={`分享文件 - ${shareKey}`}
+        open={visible}
+        onCancel={onCancel}
+        footer={modalFooter}
+        width={800}
+        destroyOnClose
+        className="share-download-modal"
+      >
+        <Table
+          columns={columns}
+          dataSource={fileList}
+          pagination={false}
+          loading={loading}
+          rowKey="id"
+          size="small"
+        />
+      </Modal>
+
+      <Modal
+        title="选择保存位置"
+        open={saveModalVisible}
+        onCancel={() => setSaveModalVisible(false)}
+        onOk={handleSaveFiles}
+        confirmLoading={saveLoading}
+        width={400}
+      >
+        <Tree
+          treeData={folderTree}
+          defaultExpandAll
+          icon={<FolderOutlined />}
+          selectedKeys={[targetPath]}
+          onSelect={(selectedKeys) => {
+            if (selectedKeys.length > 0) {
+              setTargetPath(selectedKeys[0].toString());
+            }
+          }}
+        />
+      </Modal>
+    </>
   );
 };
 
