@@ -65,18 +65,45 @@ const ShareDownloadModal: React.FC<ShareDownloadModalProps> = ({
   const handleDownload = async (fileName: string) => {
     try {
       const response = await request.get(
-        `/admin-api/system/hadoop-file/download-shared/${shareKey}/${fileName}`,
-        { responseType: "blob" }
+        `/admin-api/system/hadoop-file/download-shared/${shareKey}/${encodeURIComponent(
+          fileName
+        )}`,
+        {
+          responseType: "blob",
+          headers: {
+            Accept: "application/octet-stream",
+          },
+        }
       );
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // 从响应头中获取文件名
+      let downloadFileName = fileName;
+      const contentDisposition = response.headers?.["content-disposition"];
+      if (contentDisposition) {
+        const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
+        if (matches && matches[1]) {
+          downloadFileName = decodeURIComponent(matches[1]);
+        }
+      }
+
+      // 创建 Blob URL 并触发下载
+      const blob = new Blob([response.data], {
+        type: response.headers?.["content-type"] || "application/octet-stream",
+      });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = fileName;
+      link.download = downloadFileName;
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+
+      // 清理
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      message.success("下载成功");
     } catch (error) {
       message.error("下载失败");
       console.error("Download error:", error);
