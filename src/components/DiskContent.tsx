@@ -549,6 +549,57 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
+  // 添加获取文件夹内容的函数
+  const getFolderContents = async (
+    folderId: string,
+    folderPath: string
+  ): Promise<FileInfo[]> => {
+    const files: FileInfo[] = [];
+    const pageSize = 100; // 设置为最大允许值
+    let currentPage = 1;
+    let totalItems = 0;
+
+    try {
+      do {
+        const response = await getFileList({
+          catalogue: folderPath,
+          pageNo: currentPage,
+          pageSize: pageSize,
+        });
+
+        const res = response as unknown as ApiResponse<FileListResponse>;
+
+        if (res.code === 0 && res.data?.list) {
+          // 更新总数，用于计算是否需要继续请求
+          totalItems = res.data.total;
+
+          // 处理当前页的文件
+          for (const file of res.data.list) {
+            if (file.type === FileType.DIRECTORY) {
+              // 如果是文件夹，递归获取其内容
+              const subFiles = await getFolderContents(
+                file.id.toString(),
+                `${folderPath === "/" ? "" : folderPath}/${file.name}`
+              );
+              files.push(...subFiles);
+            } else {
+              files.push(file);
+            }
+          }
+
+          // 增加页码
+          currentPage++;
+        } else {
+          break; // 如果请求失败，退出循环
+        }
+      } while ((currentPage - 1) * pageSize < totalItems); // 继续获取直到所有文件都被处理
+    } catch (error) {
+      console.error(`获取文件夹内容失败: ${error}`);
+      message.error(`获取文件夹 ${folderPath} 内容失败`);
+    }
+    return files;
+  };
+
   // 修改批量下载的处理函数
   const handleBatchDownload = async () => {
     if (selectedRowKeys.length === 0) {
@@ -558,127 +609,176 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
 
     const downloadStore = useDownloadStore.getState();
 
-    // 获取所有选中文件的信息
-    const allSelectedFiles: FileInfo[] = [];
-    const pageSize = 100; // 每次获取100条记录
-    const totalPages = Math.ceil(selectedRowKeys.length / pageSize);
+    try {
+      // 获取所有选中文件的信息
+      const allSelectedFiles: FileInfo[] = [];
+      const pageSize = 100;
+      const totalPages = Math.ceil(selectedRowKeys.length / pageSize);
 
-    for (let page = 1; page <= totalPages; page++) {
-      const res = await getFileList({
-        catalogue: fileType === undefined ? currentPath : undefined,
-        type: fileType,
-        pageNo: page,
-        pageSize: pageSize,
-        name: searchKeyword,
-        sortField: sortState.field || undefined,
-        sortOrder: sortState.order || undefined,
-      });
+      // 检查是否包含文件夹
+      let hasDirectory = false;
+      for (let page = 1; page <= totalPages; page++) {
+        const response = await getFileList({
+          catalogue: fileType === undefined ? currentPath : undefined,
+          type: fileType,
+          pageNo: page,
+          pageSize: pageSize,
+          name: searchKeyword,
+          sortField: sortState.field || undefined,
+          sortOrder: sortState.order || undefined,
+        });
 
-      if (res.code === 0 && res.data?.list) {
-        const pageFiles = res.data.list.filter((file: FileInfo) =>
-          selectedRowKeys.includes(file.id.toString())
-        );
-        allSelectedFiles.push(...pageFiles);
+        const res = response as unknown as ApiResponse<FileListResponse>;
 
-        // 如果已经找到所有选中的文件，就提前退出
-        if (allSelectedFiles.length === selectedRowKeys.length) {
-          break;
+        if (res.code === 0 && res.data?.list) {
+          const pageFiles = res.data.list.filter((file: FileInfo) =>
+            selectedRowKeys.includes(file.id.toString())
+          );
+
+          // 检查是否有文件夹
+          if (pageFiles.some((file) => file.type === FileType.DIRECTORY)) {
+            hasDirectory = true;
+            break;
+          }
         }
       }
-    }
 
-    // 生成下载任务
-    const tasks = allSelectedFiles.map((file) => {
-      const taskId = `${file.name}-${Date.now()}-${Math.random()}`;
-      // 将文件大小从字符串转换为数字（MB）
-      const sizeInMB = file.size ? parseFloat(file.size) : 0;
-      // 将 MB 转换为字节
-      const sizeInBytes = sizeInMB * 1024 * 1024;
+      // 如果包含文件夹，显示加载动画
+      if (hasDirectory) {
+        setActionLoading(true);
+      }
 
-      return {
-        id: taskId,
-        file: {
-          name: file.name,
-          size: sizeInBytes, // 使用字节为单位的大小
-          type: file.type,
-        },
-        status: "pending" as const,
-        progress: 0,
-        error: undefined,
-        deleteTask: () => handleDeleteDownloadTask(taskId),
-      };
-    });
+      // 重新获取所有文件，包括文件夹内容
+      for (let page = 1; page <= totalPages; page++) {
+        const response = await getFileList({
+          catalogue: fileType === undefined ? currentPath : undefined,
+          type: fileType,
+          pageNo: page,
+          pageSize: pageSize,
+          name: searchKeyword,
+          sortField: sortState.field || undefined,
+          sortOrder: sortState.order || undefined,
+        });
 
-    // 添加任务到下载队列
-    downloadStore.addTasks(tasks);
-    message.success(`已添加 ${tasks.length} 个文件到下载队列`);
+        const res = response as unknown as ApiResponse<FileListResponse>;
 
-    // 开始逐个下载文件
-    for (const [index, file] of allSelectedFiles.entries()) {
-      const task = tasks[index];
-      try {
-        // 更新任务状态为下载中
-        downloadStore.updateTaskStatus(task.id, "downloading");
+        if (res.code === 0 && res.data?.list) {
+          const pageFiles = res.data.list.filter((file: FileInfo) =>
+            selectedRowKeys.includes(file.id.toString())
+          );
 
-        // 调用下载接口
-        const response = await downloadFile(
-          file.id.toString(),
-          (progressEvent) => {
-            if (progressEvent.total) {
-              const progress = Math.round(
-                (progressEvent.loaded / progressEvent.total) * 100
+          // 对每个文件/文件夹进行处理
+          for (const file of pageFiles) {
+            if (file.type === FileType.DIRECTORY) {
+              // 如果是文件夹，递归获取其中的所有文件
+              const folderPath = `${currentPath === "/" ? "" : currentPath}/${
+                file.name
+              }`;
+              const folderFiles = await getFolderContents(
+                file.id.toString(),
+                folderPath
               );
-              downloadStore.updateTaskProgress(task.id, progress);
+              allSelectedFiles.push(...folderFiles);
+            } else {
+              allSelectedFiles.push(file);
             }
           }
-        );
-
-        // 检查响应数据
-        if (!response || !response.data) {
-          throw new Error("下载失败：未收到文件数据");
         }
-
-        // 获取文件名，优先使用文件原名
-        let filename = file.name;
-        // 如果文件名包含路径，只取文件名部分
-        if (filename.includes("/")) {
-          filename = filename.split("/").pop() || filename;
-        }
-
-        // 创建 Blob URL 并触发下载
-        const blob = new Blob([response.data], {
-          type:
-            response.headers?.["content-type"] || "application/octet-stream",
-        });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-
-        // 清理
-        setTimeout(() => {
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        }, 100);
-
-        // 更新任务状态为已完成
-        downloadStore.updateTaskStatus(task.id, "downloaded");
-
-        // 等待一小段时间再开始下一个文件的下载
-        if (index < allSelectedFiles.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-      } catch (error) {
-        console.error("Download error:", error);
-        downloadStore.updateTaskStatus(
-          task.id,
-          "failed",
-          error instanceof Error ? error.message : "下载失败"
-        );
       }
+
+      // 如果之前显示了加载动画，现在关闭它
+      if (hasDirectory) {
+        setActionLoading(false);
+      }
+
+      // 生成下载任务
+      const tasks = allSelectedFiles.map((file) => {
+        const taskId = `${file.name}-${Date.now()}-${Math.random()}`;
+        const sizeInMB = file.size ? parseFloat(file.size) : 0;
+        const sizeInBytes = sizeInMB * 1024 * 1024;
+
+        return {
+          id: taskId,
+          file: {
+            name: file.name,
+            size: sizeInBytes,
+            type: file.type,
+          },
+          status: "pending" as const,
+          progress: 0,
+          error: undefined,
+          deleteTask: () => handleDeleteDownloadTask(taskId),
+        };
+      });
+
+      // 添加任务到下载队列
+      downloadStore.addTasks(tasks);
+      message.success(`已添加 ${tasks.length} 个文件到下载队列`);
+
+      // 开始逐个下载文件
+      for (const [index, file] of allSelectedFiles.entries()) {
+        const task = tasks[index];
+        try {
+          downloadStore.updateTaskStatus(task.id, "downloading");
+
+          const response = await downloadFile(
+            file.id.toString(),
+            (progressEvent) => {
+              if (progressEvent.total) {
+                const progress = Math.round(
+                  (progressEvent.loaded / progressEvent.total) * 100
+                );
+                downloadStore.updateTaskProgress(task.id, progress);
+              }
+            }
+          );
+
+          if (!response || !response.data) {
+            throw new Error("下载失败：未收到文件数据");
+          }
+
+          // 获取文件名，保留文件夹结构
+          let filename = file.name;
+          if (filename.includes("/")) {
+            filename = filename.split("/").pop() || filename;
+          }
+
+          const blob = new Blob([response.data], {
+            type:
+              response.headers?.["content-type"] || "application/octet-stream",
+          });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          link.style.display = "none";
+          document.body.appendChild(link);
+          link.click();
+
+          setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          }, 100);
+
+          downloadStore.updateTaskStatus(task.id, "downloaded");
+
+          if (index < allSelectedFiles.length - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        } catch (error) {
+          console.error("Download error:", error);
+          downloadStore.updateTaskStatus(
+            task.id,
+            "failed",
+            error instanceof Error ? error.message : "下载失败"
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Batch download error:", error);
+      message.error("批量下载失败");
+      // 确保加载动画被关闭
+      setActionLoading(false);
     }
   };
 
@@ -753,13 +853,14 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
-  // 修改删除处理函数
+  // 添加删除上传任务的处理函数
   const handleDeleteUploadTask = (taskId: string) => {
     const uploadStore = useUploadStore.getState();
     uploadStore.removeTask(taskId);
     message.success("已删除上传任务");
   };
 
+  // 添加删除下载任务的处理函数
   const handleDeleteDownloadTask = (taskId: string) => {
     const downloadStore = useDownloadStore.getState();
     downloadStore.removeTask(taskId);
