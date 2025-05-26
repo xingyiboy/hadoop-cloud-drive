@@ -201,7 +201,7 @@ const HeaderMain: React.FC<HeaderMainProps> = ({ activeTab, onTabChange }) => {
       style={{ display: "flex", alignItems: "center" }}
     >
       <div className="left">
-        <div className="logo">QST</div>
+        <div className="logo">Hadoop</div>
         <div className="logo-title">云端网盘</div>
         <Menu
           className="menu"

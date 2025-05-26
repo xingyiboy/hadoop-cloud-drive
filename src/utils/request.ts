@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-04-28 17:45:53
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-24 17:26:01
+ * @LastEditTime: 2025-05-26 15:12:49
  * @FilePath: \CloudDiskWeb\src\utils\request.ts
  */
 // 封装 axios
@@ -10,10 +10,13 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { message } from "antd";
 import { getToken } from "@/utils/setToken";
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T> {
   code: number;
   data: T;
   msg?: string;
+  headers?: {
+    [key: string]: string;
+  };
 }
 
 const instance: AxiosInstance = axios.create({
@@ -55,7 +58,7 @@ instance.interceptors.request.use(
 
 // 响应拦截器
 instance.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse>) => {
+  (response: AxiosResponse<ApiResponse<any>>) => {
     // 如果是下载文件，直接返回响应
     if (response.config.responseType === "blob") {
       return response;

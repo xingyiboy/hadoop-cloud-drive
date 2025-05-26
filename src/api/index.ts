@@ -18,7 +18,10 @@ export interface LoginResponse {
 export interface ApiResponse<T> {
   code: number;
   data: T;
-  msg: string;
+  msg?: string;
+  headers?: {
+    [key: string]: string;
+  };
 }
 
 // 注册接口

@@ -82,7 +82,7 @@ function Register() {
     <div className="register-page">
       <div className="header">
         <div className="left">
-          <div className="logo">QST</div>
+          <div className="logo">Hadoop</div>
           <div className="name">青软实训</div>
           <div className="shu">|</div>
           <div className="title"> 注册云端网盘账号</div>
@@ -150,7 +150,7 @@ function Register() {
                 <Checkbox>
                   <div className="link">
                     <div>我已阅读并同意《</div>
-                    <div>QST用户协议</div>
+                    <div>Hadoop用户协议</div>
                     <div>》</div>
                   </div>
                 </Checkbox>

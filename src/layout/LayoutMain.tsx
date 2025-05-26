@@ -21,7 +21,9 @@ const LayoutMain = () => {
     <Layout className="layout-main">
       <HeaderMain activeTab={activeTab} onTabChange={handleTabChange} />
       <Layout>
-        {activeTab === 1 && <SiderMain onFileTypeChange={setFileType} />}
+        {activeTab === 1 && (
+          <SiderMain onFileTypeChange={setFileType} activeTab={activeTab} />
+        )}
         <ContentMain fileType={fileType} activeTab={activeTab} />
       </Layout>
     </Layout>

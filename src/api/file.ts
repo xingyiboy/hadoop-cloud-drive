@@ -7,11 +7,7 @@
 import request from "@/utils/request";
 import type { ApiResponse } from "@/utils/request";
 import { FileType } from "@/enums/FileTypeEnum";
-import type {
-  AxiosRequestConfig,
-  AxiosResponse,
-  AxiosProgressEvent,
-} from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 
 export interface FileInfo {
   id: string;
@@ -30,7 +26,7 @@ interface CreateFileParams {
 }
 
 interface ProgressConfig {
-  onUploadProgress?: (progressEvent: ProgressEvent) => void;
+  onUploadProgress?: (progressEvent: any) => void;
 }
 
 export interface FileListParams {
@@ -61,7 +57,7 @@ interface DownloadOptions {
 export const createFile = (
   data: FormData,
   config?: {
-    onUploadProgress?: (progressEvent: AxiosProgressEvent) => void;
+    onUploadProgress?: (progressEvent: any) => void;
   }
 ) => {
   return request.post<ApiResponse<any>>(
@@ -114,7 +110,7 @@ export const renameFile = (
 // 下载文件
 export const downloadFile = (params: {
   fileId: string;
-  onDownloadProgress?: (progressEvent: AxiosProgressEvent) => void;
+  onDownloadProgress?: (progressEvent: any) => void;
 }) => {
   return request.get(
     `/admin-api/system/hadoop-file/download/${params.fileId}`,

@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-04-28 14:48:50
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-23 15:56:12
+ * @LastEditTime: 2025-05-26 14:50:46
  * @FilePath: \CloudDiskWeb\src\views\login\index.tsx
  */
 import "./index.scss";
@@ -156,7 +156,7 @@ function Login() {
       <div className="login-page">
         <div className="header-login">
           <div className="left">
-            <div>QST</div> <div>云端网盘</div>
+            <div>Hadoop</div> <div>云端网盘</div>
           </div>
           <div className="right">
             <div>云端首页</div> <div>APP下载</div> <div>联系我们</div>

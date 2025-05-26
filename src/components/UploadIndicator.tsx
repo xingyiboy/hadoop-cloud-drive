@@ -13,10 +13,8 @@ const UploadIndicator: React.FC = () => {
     const uploadingCount = tasks.filter(
       (task) => task.status === "uploading"
     ).length;
-    const pendingCount = tasks.filter(
-      (task) => task.status === "pending"
-    ).length;
-    const totalCount = uploadingCount + pendingCount;
+    const failedCount = tasks.filter((task) => task.status === "failed").length;
+    const totalCount = tasks.length;
     return {
       uploadingCount,
       totalCount,

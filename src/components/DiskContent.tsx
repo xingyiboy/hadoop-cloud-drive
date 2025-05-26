@@ -469,7 +469,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
 
         // 获取文件名
         let filename = file.name;
-        const contentDisposition = response.headers["content-disposition"];
+        const contentDisposition = response.headers?.["content-disposition"];
         if (contentDisposition) {
           const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
           if (matches && matches[1]) {
@@ -660,7 +660,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
 
       // 获取文件名
       let filename = record.name;
-      const contentDisposition = response.headers["content-disposition"];
+      const contentDisposition = response.headers?.["content-disposition"];
       if (contentDisposition) {
         const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
         if (matches && matches[1]) {
