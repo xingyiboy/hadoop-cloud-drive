@@ -409,7 +409,107 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     loadFileList(pagination.current, fileType);
   };
 
-  // 处理批量下载
+  // 修改下载文件的 API 调用部分
+  const downloadFile = (
+    fileId: string,
+    onDownloadProgress?: (progressEvent: any) => void
+  ): Promise<any> => {
+    return request.get(`/admin-api/system/hadoop-file/download/${fileId}`, {
+      responseType: "blob",
+      onDownloadProgress,
+      headers: {
+        // 如果支持断点续传，可以添加 Range 头
+        // Range: `bytes=${startByte}-${endByte}`
+      },
+    });
+  };
+
+  // 修改单个文件下载的处理函数
+  const handleSingleDownload = async (record: FileInfo) => {
+    const downloadStore = useDownloadStore.getState();
+    const taskId = `${record.name}-${Date.now()}-${Math.random()}`;
+
+    // 创建下载任务
+    const task = {
+      id: taskId,
+      file: {
+        name: record.name,
+        size: parseFloat(record.size || "0"),
+        type: record.type,
+      },
+      status: "pending" as const,
+      progress: 0,
+      error: undefined,
+      deleteTask: () => handleDeleteDownloadTask(taskId),
+    };
+
+    // 添加任务到下载队列
+    downloadStore.addTasks([task]);
+    message.success(`已添加 ${record.name} 到下载队列`);
+
+    try {
+      // 更新任务状态为下载中
+      downloadStore.updateTaskStatus(taskId, "downloading");
+
+      // 调用下载接口
+      const response = await downloadFile(
+        record.id.toString(),
+        (progressEvent) => {
+          if (progressEvent.total) {
+            const progress = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            );
+            downloadStore.updateTaskProgress(taskId, progress);
+          }
+        }
+      );
+
+      // 检查响应数据
+      if (!response || !response.data) {
+        throw new Error("下载失败：未收到文件数据");
+      }
+
+      // 获取文件名
+      let filename = record.name;
+      const contentDisposition = response.headers?.["content-disposition"];
+      if (contentDisposition) {
+        const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
+        if (matches && matches[1]) {
+          filename = decodeURIComponent(matches[1]);
+        }
+      }
+
+      // 创建 Blob URL 并触发下载
+      const blob = new Blob([response.data], {
+        type: response.headers?.["content-type"] || "application/octet-stream",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+
+      // 清理
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      // 更新任务状态为已完成
+      downloadStore.updateTaskStatus(taskId, "downloaded");
+    } catch (error) {
+      console.error("Download error:", error);
+      downloadStore.updateTaskStatus(
+        taskId,
+        "failed",
+        error instanceof Error ? error.message : "下载失败"
+      );
+    }
+  };
+
+  // 修改批量下载的处理函数
   const handleBatchDownload = async () => {
     if (selectedRowKeys.length === 0) {
       message.warning("请选择要下载的文件");
@@ -450,20 +550,20 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         downloadStore.updateTaskStatus(task.id, "downloading");
 
         // 调用下载接口
-        const response = await downloadFile({
-          fileId: file.id.toString(),
-          onDownloadProgress: (progressEvent) => {
+        const response = await downloadFile(
+          file.id.toString(),
+          (progressEvent) => {
             if (progressEvent.total) {
               const progress = Math.round(
                 (progressEvent.loaded / progressEvent.total) * 100
               );
               downloadStore.updateTaskProgress(task.id, progress);
             }
-          },
-        });
+          }
+        );
 
         // 检查响应数据
-        if (!response.data) {
+        if (!response || !response.data) {
           throw new Error("下载失败：未收到文件数据");
         }
 
@@ -477,8 +577,12 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           }
         }
 
-        // 创建下载链接并触发下载
-        const url = window.URL.createObjectURL(response.data);
+        // 创建 Blob URL 并触发下载
+        const blob = new Blob([response.data], {
+          type:
+            response.headers?.["content-type"] || "application/octet-stream",
+        });
+        const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
         link.download = filename;
@@ -611,88 +715,6 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     const downloadStore = useDownloadStore.getState();
     downloadStore.removeTask(taskId);
     message.success("已删除下载任务");
-  };
-
-  // 处理单个文件下载
-  const handleSingleDownload = async (record: FileInfo) => {
-    const downloadStore = useDownloadStore.getState();
-    const taskId = `${record.name}-${Date.now()}-${Math.random()}`;
-
-    // 创建下载任务
-    const task = {
-      id: taskId,
-      file: {
-        name: record.name,
-        size: parseFloat(record.size || "0"),
-        type: record.type,
-      },
-      status: "pending" as const,
-      progress: 0,
-      error: undefined,
-      deleteTask: () => handleDeleteDownloadTask(taskId),
-    };
-
-    // 添加任务到下载队列
-    downloadStore.addTasks([task]);
-    message.success(`已添加 ${record.name} 到下载队列`);
-
-    try {
-      // 更新任务状态为下载中
-      downloadStore.updateTaskStatus(taskId, "downloading");
-
-      // 调用下载接口
-      const response = (await downloadFile({
-        fileId: record.id.toString(),
-        onDownloadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const progress = Math.round(
-              (progressEvent.loaded / progressEvent.total) * 100
-            );
-            downloadStore.updateTaskProgress(taskId, progress);
-          }
-        },
-      })) as DownloadResponse;
-
-      // 检查响应数据
-      if (!response.data) {
-        throw new Error("下载失败：未收到文件数据");
-      }
-
-      // 获取文件名
-      let filename = record.name;
-      const contentDisposition = response.headers?.["content-disposition"];
-      if (contentDisposition) {
-        const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
-        if (matches && matches[1]) {
-          filename = decodeURIComponent(matches[1]);
-        }
-      }
-
-      // 创建下载链接并触发下载
-      const url = window.URL.createObjectURL(response.data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-
-      // 清理
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }, 100);
-
-      // 更新任务状态为已完成
-      downloadStore.updateTaskStatus(taskId, "downloaded");
-    } catch (error) {
-      console.error("Download error:", error);
-      downloadStore.updateTaskStatus(
-        taskId,
-        "failed",
-        error instanceof Error ? error.message : "下载失败"
-      );
-    }
   };
 
   // 处理单个文件删除
