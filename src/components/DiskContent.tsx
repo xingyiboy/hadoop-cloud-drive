@@ -20,6 +20,7 @@ import {
   AppstoreOutlined,
   BarsOutlined,
   DeleteOutlined,
+  UndoOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import "../layout/style/content-main.scss";
@@ -31,6 +32,7 @@ import { FileInfo } from "@/types/file";
 import { useUploadStore } from "@/store/uploadStore";
 import { useDownloadStore } from "@/store/downloadStore";
 import dayjs from "dayjs";
+import request from "@/utils/request";
 
 const { Content } = Layout;
 
@@ -47,9 +49,15 @@ interface ApiResponse<T> {
   code: number;
   data: T;
   msg?: string;
+  headers?: {
+    [key: string]: string;
+  };
 }
 
-interface DownloadResponse extends ApiResponse<Blob> {
+interface DownloadResponse {
+  code: number;
+  data: Blob;
+  msg?: string;
   headers: {
     [key: string]: string;
   };
@@ -566,7 +574,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 处理单个文件删除
   const handleSingleDelete = async (record: FileInfo) => {
     try {
-      const res = await deleteFile(record.id);
+      const res = await deleteFile(record.id.toString());
       if (res.code === 0) {
         message.success("删除成功");
         // 刷新文件列表
@@ -604,6 +612,55 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     } catch (error) {
       message.error("批量删除失败");
       console.error("Batch delete error:", error);
+    }
+  };
+
+  // 在API调用部分添加恢复文件的方法
+  const restoreFile = (id: string): Promise<ApiResponse<void>> => {
+    return request.post(`/admin-api/system/hadoop-file/restore?id=${id}`);
+  };
+
+  // 添加恢复文件的处理函数
+  const handleSingleRestore = async (record: FileInfo) => {
+    try {
+      const res = await restoreFile(record.id.toString());
+      if (res.code === 0) {
+        message.success("文件恢复成功");
+        // 刷新文件列表
+        loadFileList(pagination.current, fileType);
+      } else {
+        message.error(res.msg || "文件恢复失败");
+      }
+    } catch (error) {
+      message.error("文件恢复失败");
+      console.error("Restore error:", error);
+    }
+  };
+
+  // 添加批量恢复的处理函数
+  const handleBatchRestore = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("请选择要恢复的文件");
+      return;
+    }
+
+    try {
+      // 逐个恢复选中的文件
+      for (const id of selectedRowKeys) {
+        const res = await restoreFile(id);
+        if (res.code !== 0) {
+          message.error(`恢复文件(ID: ${id})失败: ${res.msg}`);
+        }
+      }
+
+      message.success("批量恢复完成");
+      // 清空选中状态
+      setSelectedRowKeys([]);
+      // 刷新文件列表
+      loadFileList(pagination.current, fileType);
+    } catch (error) {
+      message.error("批量恢复失败");
+      console.error("Batch restore error:", error);
     }
   };
 
@@ -661,20 +718,32 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             {getFileIcon(record.type)}
             <span className="file-name-text">{text}</span>
             <div className="file-actions">
-              <CloudDownloadOutlined
-                className="action-icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSingleDownload(record);
-                }}
-              />
-              <ShareAltOutlined
-                className="action-icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSingleShare(record);
-                }}
-              />
+              {fileType === 7 ? (
+                <UndoOutlined
+                  className="action-icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSingleRestore(record);
+                  }}
+                />
+              ) : (
+                <>
+                  <CloudDownloadOutlined
+                    className="action-icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSingleDownload(record);
+                    }}
+                  />
+                  <ShareAltOutlined
+                    className="action-icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSingleShare(record);
+                    }}
+                  />
+                </>
+              )}
               <DeleteOutlined
                 className="action-icon danger"
                 onClick={(e) => {
@@ -713,44 +782,67 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     <Content className="content-main">
       <div className="operation-bar">
         <div className="left-buttons">
-          <Upload
-            multiple
-            showUploadList={false}
-            beforeUpload={(file, fileList) => {
-              if (file === fileList[0]) {
-                handleFileUpload(fileList);
-              }
-              return false;
-            }}
-            disabled={fileType !== undefined || selectedRowKeys.length > 0}
-          >
-            <Button
-              type="primary"
-              disabled={fileType !== undefined || selectedRowKeys.length > 0}
-              icon={<UploadOutlined />}
-            >
-              上传
-            </Button>
-          </Upload>
-          <Button
-            icon={<FolderAddOutlined />}
-            onClick={() => setCreateFolderVisible(true)}
-            disabled={fileType !== undefined || selectedRowKeys.length > 0}
-          >
-            新建文件夹
-          </Button>
-          {selectedRowKeys.length > 0 && (
-            <>
+          {fileType === 7 ? (
+            selectedRowKeys.length > 0 && (
               <Button
                 type="primary"
-                icon={<CloudDownloadOutlined />}
-                onClick={handleBatchDownload}
+                icon={<UndoOutlined />}
+                onClick={handleBatchRestore}
               >
-                下载
+                恢复
               </Button>
-              <Button icon={<ShareAltOutlined />} onClick={handleBatchShare}>
-                分享
+            )
+          ) : (
+            <>
+              <Upload
+                multiple
+                showUploadList={false}
+                beforeUpload={(file, fileList) => {
+                  if (file === fileList[0]) {
+                    handleFileUpload(fileList);
+                  }
+                  return false;
+                }}
+                disabled={fileType !== undefined || selectedRowKeys.length > 0}
+              >
+                <Button
+                  type="primary"
+                  disabled={
+                    fileType !== undefined || selectedRowKeys.length > 0
+                  }
+                  icon={<UploadOutlined />}
+                >
+                  上传
+                </Button>
+              </Upload>
+              <Button
+                icon={<FolderAddOutlined />}
+                onClick={() => setCreateFolderVisible(true)}
+                disabled={fileType !== undefined || selectedRowKeys.length > 0}
+              >
+                新建文件夹
               </Button>
+            </>
+          )}
+          {selectedRowKeys.length > 0 && (
+            <>
+              {fileType !== 7 && (
+                <>
+                  <Button
+                    type="primary"
+                    icon={<CloudDownloadOutlined />}
+                    onClick={handleBatchDownload}
+                  >
+                    下载
+                  </Button>
+                  <Button
+                    icon={<ShareAltOutlined />}
+                    onClick={handleBatchShare}
+                  >
+                    分享
+                  </Button>
+                </>
+              )}
               <Button
                 danger
                 icon={<DeleteOutlined />}
