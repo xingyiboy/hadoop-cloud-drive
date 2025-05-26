@@ -8,6 +8,8 @@ import {
   message,
   Pagination,
   Spin,
+  Dropdown,
+  Menu,
 } from "antd";
 import type { RcFile } from "antd/lib/upload";
 import type { SorterResult } from "antd/lib/table/interface";
@@ -165,6 +167,14 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [editingFileName, setEditingFileName] = useState<string>("");
   const [isRenaming, setIsRenaming] = useState(false);
+  // 在 DiskContent 组件内添加右键菜单状态
+  const [contextMenuPosition, setContextMenuPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [rightClickedFile, setRightClickedFile] = useState<FileInfo | null>(
+    null
+  );
 
   const location = useLocation();
   const baseUrl = window.location.origin;
@@ -1085,34 +1095,31 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
-  // 添加重命名相关的函数
-  const handleRenameStart = (record: FileInfo, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingFileId(record.id.toString());
-    setEditingFileName(record.name);
+  // 处理右键菜单
+  const handleContextMenu = (e: React.MouseEvent, record: FileInfo) => {
+    e.preventDefault();
+    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    setRightClickedFile(record);
   };
 
-  const handleRenameCancel = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setEditingFileId(null);
-    setEditingFileName("");
-  };
-
+  // 重命名相关的处理函数
   const handleRenameSubmit = async (record: FileInfo, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!editingFileName.trim()) {
+    const trimmedName = editingFileName.trim();
+
+    if (!trimmedName) {
       message.error("文件名不能为空");
       return;
     }
 
-    if (editingFileName === record.name) {
+    if (trimmedName === record.name) {
       handleRenameCancel();
       return;
     }
 
     try {
       setIsRenaming(true);
-      const res = await renameFile(record.id.toString(), editingFileName);
+      const res = await renameFile(record.id.toString(), trimmedName);
       if (res.code === 0) {
         message.success("重命名成功");
         loadFileList(pagination.current, fileType);
@@ -1127,6 +1134,67 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       handleRenameCancel();
     }
   };
+
+  const handleRenameCancel = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingFileId(null);
+    setEditingFileName("");
+    setContextMenuPosition(null);
+    setRightClickedFile(null);
+  };
+
+  // 添加键盘事件处理
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (editingFileId) {
+        if (e.key === "Escape") {
+          handleRenameCancel();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [editingFileId]);
+
+  // 添加点击外部关闭右键菜单
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (contextMenuPosition) {
+        setContextMenuPosition(null);
+        setRightClickedFile(null);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [contextMenuPosition]);
+
+  // 右键菜单组件
+  const contextMenu = rightClickedFile && (
+    <Menu
+      style={{
+        position: "fixed",
+        left: contextMenuPosition?.x,
+        top: contextMenuPosition?.y,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+      }}
+      onClick={({ key }) => {
+        if (key === "rename") {
+          setEditingFileId(rightClickedFile.id.toString());
+          setEditingFileName(rightClickedFile.name);
+        }
+        setContextMenuPosition(null);
+        setRightClickedFile(null);
+      }}
+    >
+      <Menu.Item key="rename">重命名</Menu.Item>
+    </Menu>
+  );
 
   // 表格列定义
   const columns = [
@@ -1188,7 +1256,11 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               <div
                 className={`file-name-content ${
                   actionLoading ? "disabled" : ""
-                }`}
+                } ${editingFileId === record.id.toString() ? "editing" : ""}`}
+                onClick={() => !actionLoading && handleFileClick(record)}
+                onContextMenu={(e) =>
+                  !actionLoading && handleContextMenu(e, record)
+                }
               >
                 {getFileIcon(record.type)}
                 {editingFileId === record.id.toString() ? (
@@ -1238,15 +1310,13 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               disabled={actionLoading}
             />
             <div
-              className={`file-name-content ${actionLoading ? "disabled" : ""}`}
+              className={`file-name-content ${
+                actionLoading ? "disabled" : ""
+              } ${editingFileId === record.id.toString() ? "editing" : ""}`}
               onClick={() => !actionLoading && handleFileClick(record)}
-              onDoubleClick={(e) =>
-                !actionLoading && handleRenameStart(record, e)
+              onContextMenu={(e) =>
+                !actionLoading && handleContextMenu(e, record)
               }
-              onContextMenu={(e) => {
-                e.preventDefault();
-                !actionLoading && handleRenameStart(record, e);
-              }}
             >
               {getFileIcon(record.type)}
               {editingFileId === record.id.toString() ? (
@@ -1262,73 +1332,75 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               ) : (
                 <span className="file-name-text">{text}</span>
               )}
-              <div className="file-actions">
-                {fileType === 7 ? (
-                  <Button
-                    type="link"
-                    icon={<UndoOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!actionLoading) {
-                        handleSingleRestore(record);
-                      }
-                    }}
-                    disabled={actionLoading}
-                    loading={actionLoading}
-                    className={actionLoading ? "disabled" : ""}
-                  >
-                    恢复
-                  </Button>
-                ) : (
-                  <>
+              {editingFileId !== record.id.toString() && (
+                <div className="file-actions">
+                  {fileType === 7 ? (
                     <Button
                       type="link"
-                      icon={<CloudDownloadOutlined />}
+                      icon={<UndoOutlined />}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!actionLoading) {
-                          handleSingleDownload(record);
-                        }
-                      }}
-                      disabled={actionLoading}
-                      className={actionLoading ? "disabled" : ""}
-                    >
-                      下载
-                    </Button>
-                    <Button
-                      type="link"
-                      icon={<ShareAltOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!actionLoading) {
-                          handleSingleShare(record);
+                          handleSingleRestore(record);
                         }
                       }}
                       disabled={actionLoading}
                       loading={actionLoading}
                       className={actionLoading ? "disabled" : ""}
                     >
-                      分享
+                      恢复
                     </Button>
-                    <Button
-                      type="link"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!actionLoading) {
-                          handleSingleDelete(record);
-                        }
-                      }}
-                      disabled={actionLoading}
-                      loading={actionLoading}
-                      className={actionLoading ? "disabled" : ""}
-                    >
-                      删除
-                    </Button>
-                  </>
-                )}
-              </div>
+                  ) : (
+                    <>
+                      <Button
+                        type="link"
+                        icon={<CloudDownloadOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!actionLoading) {
+                            handleSingleDownload(record);
+                          }
+                        }}
+                        disabled={actionLoading}
+                        className={actionLoading ? "disabled" : ""}
+                      >
+                        下载
+                      </Button>
+                      <Button
+                        type="link"
+                        icon={<ShareAltOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!actionLoading) {
+                            handleSingleShare(record);
+                          }
+                        }}
+                        disabled={actionLoading}
+                        loading={actionLoading}
+                        className={actionLoading ? "disabled" : ""}
+                      >
+                        分享
+                      </Button>
+                      <Button
+                        type="link"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!actionLoading) {
+                            handleSingleDelete(record);
+                          }
+                        }}
+                        disabled={actionLoading}
+                        loading={actionLoading}
+                        className={actionLoading ? "disabled" : ""}
+                      >
+                        删除
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         );
@@ -1611,15 +1683,11 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 key={file.id}
                 className={`grid-item ${
                   selectedRowKeys.includes(file.id.toString()) ? "selected" : ""
-                }`}
+                } ${editingFileId === file.id.toString() ? "editing" : ""}`}
                 onClick={() => !actionLoading && handleFileClick(file)}
-                onDoubleClick={(e) =>
-                  !actionLoading && handleRenameStart(file, e)
+                onContextMenu={(e) =>
+                  !actionLoading && handleContextMenu(e, file)
                 }
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  !actionLoading && handleRenameStart(file, e);
-                }}
               >
                 <div className="grid-item-checkbox">
                   <Checkbox
@@ -1750,6 +1818,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           <Spin indicator={antIcon} tip="正在处理..." />
         </div>
       )}
+      {contextMenu}
     </Content>
   );
 };
