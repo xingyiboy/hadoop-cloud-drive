@@ -73,6 +73,12 @@ const formatDateTime = (timestamp: number): string => {
   return dayjs(normalizedTimestamp * 1000).format("YYYY-MM-DD HH:mm:ss");
 };
 
+// 在 DiskContent 组件的开头添加新的接口和状态
+interface GroupedSharedFile {
+  shareKey: string;
+  files: FileInfo[];
+}
+
 const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 选中的文件keys
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
@@ -102,6 +108,10 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     field: null,
     order: null,
   });
+  // 在 DiskContent 组件的开头添加新的接口和状态
+  const [groupedSharedFiles, setGroupedSharedFiles] = useState<
+    GroupedSharedFile[]
+  >([]);
 
   // 加载文件列表
   const loadFileList = async (
@@ -129,6 +139,33 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           ...item,
           createTime: item.createTime.toString(),
         }));
+
+        // 如果是分享文件页面，对文件进行分组
+        if (type === 8) {
+          // 根据文件名中的分享路径进行分组
+          const groupedFiles: { [key: string]: FileInfo[] } = {};
+          convertedList.forEach((file: FileInfo) => {
+            // 假设分享文件的名称格式为：分享/[shareKey]/filename
+            const match = file.name.match(/^分享\/([^/]+)\//);
+            if (match) {
+              const shareKey = match[1];
+              if (!groupedFiles[shareKey]) {
+                groupedFiles[shareKey] = [];
+              }
+              groupedFiles[shareKey].push(file);
+            }
+          });
+
+          // 转换为数组格式
+          const groupedList = Object.entries(groupedFiles).map(
+            ([shareKey, files]) => ({
+              shareKey,
+              files,
+            })
+          );
+
+          setGroupedSharedFiles(groupedList);
+        }
 
         // 如果没有指定排序，使用默认排序：文件夹在前，按名称排序
         if (!sortState.field) {
@@ -759,81 +796,92 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       width: 500,
       ellipsis: true,
       sorter: true,
-      onHeaderCell: () => ({
-        onClick: (e: React.MouseEvent) => {
-          // 如果点击的是 Checkbox 或其容器，不触发排序
-          if (
-            e.target instanceof HTMLElement &&
-            (e.target.closest(".ant-checkbox-wrapper") ||
-              e.target.closest(".ant-checkbox"))
-          ) {
-            e.stopPropagation();
-          }
-        },
-      }),
-      render: (text: string, record: FileInfo) => (
-        <div className="file-name-cell">
-          <Checkbox
-            checked={selectedRowKeys.includes(record.id.toString())}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) =>
-              handleSelect(e.target.checked, record.id.toString())
-            }
-          />
-          <div
-            className="file-name-content"
-            onClick={() => handleFileClick(record)}
-          >
-            {getFileIcon(record.type)}
-            <span className="file-name-text">{text}</span>
-            <div className="file-actions">
-              {fileType === 7 ? (
-                <UndoOutlined
-                  className="action-icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSingleRestore(record);
-                  }}
-                />
-              ) : fileType === 8 ? (
-                <UndoOutlined
-                  className="action-icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCancelShare(record);
-                  }}
-                />
-              ) : (
-                <>
-                  <CloudDownloadOutlined
+      render: (text: string, record: FileInfo) => {
+        // 如果是分享页面，特殊处理显示方式
+        if (fileType === 8) {
+          // 从文件名中提取实际文件名（去掉分享路径前缀）
+          const actualName = text.split("/").pop() || text;
+          return (
+            <div className="file-name-cell">
+              <Checkbox
+                checked={selectedRowKeys.includes(record.id.toString())}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) =>
+                  handleSelect(e.target.checked, record.id.toString())
+                }
+              />
+              <div className="file-name-content">
+                {getFileIcon(record.type)}
+                <span className="file-name-text">{actualName}</span>
+                <div className="file-actions">
+                  <UndoOutlined
                     className="action-icon"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSingleDownload(record);
+                      handleCancelShare(record);
                     }}
                   />
-                  <ShareAltOutlined
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // 非分享页面保持原有渲染逻辑
+        return (
+          <div className="file-name-cell">
+            <Checkbox
+              checked={selectedRowKeys.includes(record.id.toString())}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) =>
+                handleSelect(e.target.checked, record.id.toString())
+              }
+            />
+            <div
+              className="file-name-content"
+              onClick={() => handleFileClick(record)}
+            >
+              {getFileIcon(record.type)}
+              <span className="file-name-text">{text}</span>
+              <div className="file-actions">
+                {fileType === 7 ? (
+                  <UndoOutlined
                     className="action-icon"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSingleShare(record);
+                      handleSingleRestore(record);
                     }}
                   />
-                </>
-              )}
-              {fileType === 8 ? null : (
-                <DeleteOutlined
-                  className="action-icon danger"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSingleDelete(record);
-                  }}
-                />
-              )}
+                ) : (
+                  <>
+                    <CloudDownloadOutlined
+                      className="action-icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSingleDownload(record);
+                      }}
+                    />
+                    <ShareAltOutlined
+                      className="action-icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSingleShare(record);
+                      }}
+                    />
+                    <DeleteOutlined
+                      className="action-icon danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSingleDelete(record);
+                      }}
+                    />
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       title: "类型",
@@ -967,15 +1015,38 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         </div>
       </div>
       <div className="table-container">
-        <Table
-          columns={columns}
-          dataSource={fileList || []}
-          pagination={false}
-          showHeader={true}
-          loading={loading}
-          rowKey="id"
-          onChange={handleTableChange}
-        />
+        {fileType === 8 ? (
+          // 分享文件页面使用分组显示
+          <div className="shared-files-container">
+            {groupedSharedFiles.map((group) => (
+              <div key={group.shareKey} className="shared-group">
+                <div className="shared-group-header">
+                  <h3>分享文件夹 {group.shareKey}</h3>
+                </div>
+                <Table
+                  columns={columns}
+                  dataSource={group.files}
+                  pagination={false}
+                  showHeader={true}
+                  loading={loading}
+                  rowKey="id"
+                  onChange={handleTableChange}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          // 其他页面保持原有表格显示
+          <Table
+            columns={columns}
+            dataSource={fileList}
+            pagination={false}
+            showHeader={true}
+            loading={loading}
+            rowKey="id"
+            onChange={handleTableChange}
+          />
+        )}
       </div>
       <div
         className="pagination-container"
