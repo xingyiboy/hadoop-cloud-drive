@@ -557,10 +557,10 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 处理单个文件取消分享
   const handleCancelShare = async (record: FileInfo) => {
     try {
+      setActionLoading(true);
       const res = await cancelShare(record.id.toString());
       if (res.code === 0) {
         message.success("取消分享成功");
-        // 刷新文件列表
         loadFileList(pagination.current, fileType);
       } else {
         message.error(res.msg || "取消分享失败");
@@ -568,6 +568,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     } catch (error) {
       message.error("取消分享失败");
       console.error("Cancel share error:", error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -579,7 +581,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
 
     try {
-      // 逐个取消分享选中的文件
+      setActionLoading(true);
       for (const id of selectedRowKeys) {
         const res = await cancelShare(id);
         if (res.code !== 0) {
@@ -588,13 +590,13 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       }
 
       message.success("批量取消分享完成");
-      // 清空选中状态
       setSelectedRowKeys([]);
-      // 刷新文件列表
       loadFileList(pagination.current, fileType);
     } catch (error) {
       message.error("批量取消分享失败");
       console.error("Batch cancel share error:", error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -747,10 +749,10 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 添加恢复文件的处理函数
   const handleSingleRestore = async (record: FileInfo) => {
     try {
+      setActionLoading(true);
       const res = await restoreFile(record.id.toString());
       if (res.code === 0) {
         message.success("文件恢复成功");
-        // 刷新文件列表
         loadFileList(pagination.current, fileType);
       } else {
         message.error(res.msg || "文件恢复失败");
@@ -758,6 +760,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     } catch (error) {
       message.error("文件恢复失败");
       console.error("Restore error:", error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -769,7 +773,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
 
     try {
-      // 逐个恢复选中的文件
+      setActionLoading(true);
       for (const id of selectedRowKeys) {
         const res = await restoreFile(id);
         if (res.code !== 0) {
@@ -778,13 +782,13 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       }
 
       message.success("批量恢复完成");
-      // 清空选中状态
       setSelectedRowKeys([]);
-      // 刷新文件列表
       loadFileList(pagination.current, fileType);
     } catch (error) {
       message.error("批量恢复失败");
       console.error("Batch restore error:", error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -844,19 +848,29 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 }
                 disabled={actionLoading}
               />
-              <div className="file-name-content">
+              <div
+                className={`file-name-content ${
+                  actionLoading ? "disabled" : ""
+                }`}
+              >
                 {getFileIcon(record.type)}
                 <span className="file-name-text">{actualName}</span>
                 <div className="file-actions">
-                  <UndoOutlined
-                    className={`action-icon ${actionLoading ? "disabled" : ""}`}
+                  <Button
+                    type="link"
+                    icon={<UndoOutlined />}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!actionLoading) {
                         handleCancelShare(record);
                       }
                     }}
-                  />
+                    disabled={actionLoading}
+                    loading={actionLoading}
+                    className={actionLoading ? "disabled" : ""}
+                  >
+                    取消分享
+                  </Button>
                 </div>
               </div>
             </div>
@@ -875,57 +889,75 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               disabled={actionLoading}
             />
             <div
-              className="file-name-content"
+              className={`file-name-content ${actionLoading ? "disabled" : ""}`}
               onClick={() => !actionLoading && handleFileClick(record)}
             >
               {getFileIcon(record.type)}
               <span className="file-name-text">{text}</span>
               <div className="file-actions">
                 {fileType === 7 ? (
-                  <UndoOutlined
-                    className={`action-icon ${actionLoading ? "disabled" : ""}`}
+                  <Button
+                    type="link"
+                    icon={<UndoOutlined />}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!actionLoading) {
                         handleSingleRestore(record);
                       }
                     }}
-                  />
+                    disabled={actionLoading}
+                    loading={actionLoading}
+                    className={actionLoading ? "disabled" : ""}
+                  >
+                    恢复
+                  </Button>
                 ) : (
                   <>
-                    <CloudDownloadOutlined
-                      className={`action-icon ${
-                        actionLoading ? "disabled" : ""
-                      }`}
+                    <Button
+                      type="link"
+                      icon={<CloudDownloadOutlined />}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!actionLoading) {
                           handleSingleDownload(record);
                         }
                       }}
-                    />
-                    <ShareAltOutlined
-                      className={`action-icon ${
-                        actionLoading ? "disabled" : ""
-                      }`}
+                      disabled={actionLoading}
+                      className={actionLoading ? "disabled" : ""}
+                    >
+                      下载
+                    </Button>
+                    <Button
+                      type="link"
+                      icon={<ShareAltOutlined />}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!actionLoading) {
                           handleSingleShare(record);
                         }
                       }}
-                    />
-                    <DeleteOutlined
-                      className={`action-icon danger ${
-                        actionLoading ? "disabled" : ""
-                      }`}
+                      disabled={actionLoading}
+                      loading={actionLoading}
+                      className={actionLoading ? "disabled" : ""}
+                    >
+                      分享
+                    </Button>
+                    <Button
+                      type="link"
+                      danger
+                      icon={<DeleteOutlined />}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!actionLoading) {
                           handleSingleDelete(record);
                         }
                       }}
-                    />
+                      disabled={actionLoading}
+                      loading={actionLoading}
+                      className={actionLoading ? "disabled" : ""}
+                    >
+                      删除
+                    </Button>
                   </>
                 )}
               </div>
