@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-05-09 12:03:12
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-24 17:33:18
+ * @LastEditTime: 2025-05-26 10:19:34
  * @FilePath: \CloudDiskWeb\src\layout\component\HeaderMain.tsx
  */
 import { useNavigate } from "react-router-dom";
@@ -126,7 +126,6 @@ const HeaderMain: React.FC<HeaderMainProps> = ({ activeTab, onTabChange }) => {
   // 顶部导航菜单项
   const navMenuItems: MenuProps["items"] = [
     { key: "1", label: "网盘" },
-    { key: "2", label: "分享" },
     { key: "3", label: "正在上传" },
     { key: "4", label: "正在下载" },
   ];

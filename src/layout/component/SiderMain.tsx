@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-05-09 12:03:12
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-12 16:16:14
+ * @LastEditTime: 2025-05-26 10:19:54
  * @FilePath: \CloudDiskWeb\src\layout\component\SiderMain.tsx
  */
 import { Layout, Menu } from "antd";
@@ -103,20 +103,6 @@ const SiderMain: React.FC<SiderMainProps> = ({
       key: "recycle",
       icon: <DeleteOutlined />,
       label: "回收站",
-    },
-  ];
-
-  // 分享页面的菜单项
-  const shareMenuItems = [
-    {
-      key: "shared_by_me",
-      icon: <ShareAltOutlined />,
-      label: "我的分享",
-    },
-    {
-      key: "shared_to_me",
-      icon: <ShareAltOutlined />,
-      label: "收到的分享",
     },
   ];
 
