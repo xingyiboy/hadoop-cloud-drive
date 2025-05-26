@@ -308,16 +308,22 @@
       justify-content: space-between;
       align-items: center;
 
-      h3 {
-        margin: 0;
-        font-size: 16px;
-        color: #333;
+      .header-left {
         display: flex;
         align-items: center;
+        gap: 8px;
 
-        &:before {
-          content: "📁";
-          margin-right: 8px;
+        h3 {
+          margin: 0;
+          font-size: 16px;
+          color: #333;
+          display: flex;
+          align-items: center;
+
+          &:before {
+            content: "📁";
+            margin-right: 8px;
+          }
         }
       }
 
