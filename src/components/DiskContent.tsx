@@ -86,6 +86,8 @@ interface GroupedSharedFile {
 const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   // 选中的文件keys
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  // 所有已加载文件的ID缓存，用于跨页全选
+  const [loadedFileIds, setLoadedFileIds] = useState<Set<string>>(new Set());
   // 当前路径
   const [currentPath, setCurrentPath] = useState<string>(
     localStorage.getItem("currentPath") || "/"
@@ -140,11 +142,18 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         pageSize: size,
         sortField: sortState.field || undefined,
         sortOrder: sortState.order || undefined,
-        excludeShared: type !== 8, // 如果不是分享页面，则排除已分享的文件
+        excludeShared: type !== 8,
       });
       if (res.code === 0 && res.data) {
         const data = (res as unknown as ApiResponse<FileListResponse>).data;
         const list = data.list || [];
+        // 更新已加载文件ID缓存
+        const newFileIds = new Set(loadedFileIds);
+        list.forEach((file: FileInfo) => {
+          newFileIds.add(file.id.toString());
+        });
+        setLoadedFileIds(newFileIds);
+
         // 转换 createTime 类型
         let convertedList = list.map((item: FileInfo) => ({
           ...item,
@@ -357,12 +366,22 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     localStorage.setItem("currentPath", newPath);
   };
 
-  // 处理全选
+  // 修改全选处理函数
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRowKeys(fileList.map((item) => item.id.toString()));
+      // 如果是全选，将当前页面的所有文件ID添加到已选中列表
+      const currentPageIds = fileList.map((item) => item.id.toString());
+      const newSelectedKeys = new Set([...selectedRowKeys, ...currentPageIds]);
+      setSelectedRowKeys(Array.from(newSelectedKeys));
     } else {
-      setSelectedRowKeys([]);
+      // 如果是取消全选，将当前页面的所有文件ID从已选中列表中移除
+      const currentPageIds = new Set(
+        fileList.map((item) => item.id.toString())
+      );
+      const newSelectedKeys = selectedRowKeys.filter(
+        (key) => !currentPageIds.has(key)
+      );
+      setSelectedRowKeys(newSelectedKeys);
     }
   };
 
@@ -509,6 +528,25 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
+  // 处理单个文件分享
+  const handleSingleShare = async (record: FileInfo) => {
+    try {
+      setActionLoading(true);
+      const res = await shareFile(record.id.toString());
+      if (res.code === 0) {
+        message.success("分享成功");
+        loadFileList(pagination.current, fileType);
+      } else {
+        message.error(res.msg || "分享失败");
+      }
+    } catch (error) {
+      message.error("分享失败");
+      console.error("Share error:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // 修改批量下载的处理函数
   const handleBatchDownload = async () => {
     if (selectedRowKeys.length === 0) {
@@ -517,12 +555,38 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
 
     const downloadStore = useDownloadStore.getState();
-    const selectedFiles = fileList.filter((file) =>
-      selectedRowKeys.includes(file.id.toString())
-    );
+
+    // 获取所有选中文件的信息
+    const allSelectedFiles: FileInfo[] = [];
+    const pageSize = 100; // 每次获取100条记录
+    const totalPages = Math.ceil(selectedRowKeys.length / pageSize);
+
+    for (let page = 1; page <= totalPages; page++) {
+      const res = await getFileList({
+        catalogue: fileType === undefined ? currentPath : undefined,
+        type: fileType,
+        pageNo: page,
+        pageSize: pageSize,
+        name: searchKeyword,
+        sortField: sortState.field || undefined,
+        sortOrder: sortState.order || undefined,
+      });
+
+      if (res.code === 0 && res.data) {
+        const pageFiles = res.data.list.filter((file: FileInfo) =>
+          selectedRowKeys.includes(file.id.toString())
+        );
+        allSelectedFiles.push(...pageFiles);
+
+        // 如果已经找到所有选中的文件，就提前退出
+        if (allSelectedFiles.length === selectedRowKeys.length) {
+          break;
+        }
+      }
+    }
 
     // 生成下载任务
-    const tasks = selectedFiles.map((file) => {
+    const tasks = allSelectedFiles.map((file) => {
       const taskId = `${file.name}-${Date.now()}-${Math.random()}`;
       return {
         id: taskId,
@@ -543,7 +607,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     message.success(`已添加 ${tasks.length} 个文件到下载队列`);
 
     // 开始逐个下载文件
-    for (const [index, file] of selectedFiles.entries()) {
+    for (const [index, file] of allSelectedFiles.entries()) {
       const task = tasks[index];
       try {
         // 更新任务状态为下载中
@@ -567,14 +631,11 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           throw new Error("下载失败：未收到文件数据");
         }
 
-        // 获取文件名
+        // 获取文件名，优先使用文件原名
         let filename = file.name;
-        const contentDisposition = response.headers?.["content-disposition"];
-        if (contentDisposition) {
-          const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
-          if (matches && matches[1]) {
-            filename = decodeURIComponent(matches[1]);
-          }
+        // 如果文件名包含路径，只取文件名部分
+        if (filename.includes("/")) {
+          filename = filename.split("/").pop() || filename;
         }
 
         // 创建 Blob URL 并触发下载
@@ -600,7 +661,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         downloadStore.updateTaskStatus(task.id, "downloaded");
 
         // 等待一小段时间再开始下一个文件的下载
-        if (index < selectedFiles.length - 1) {
+        if (index < allSelectedFiles.length - 1) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       } catch (error) {
@@ -614,26 +675,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
-  // 处理单个文件分享
-  const handleSingleShare = async (record: FileInfo) => {
-    try {
-      setActionLoading(true);
-      const res = await shareFile(record.id.toString());
-      if (res.code === 0) {
-        message.success("分享成功");
-        loadFileList(pagination.current, fileType);
-      } else {
-        message.error(res.msg || "分享失败");
-      }
-    } catch (error) {
-      message.error("分享失败");
-      console.error("Share error:", error);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // 处理批量分享
+  // 修改批量分享的处理函数
   const handleBatchShare = async () => {
     if (selectedRowKeys.length === 0) {
       message.warning("请选择要分享的文件");
@@ -644,7 +686,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       setActionLoading(true);
       const res = await batchShareFiles(selectedRowKeys);
       if (res.code === 0) {
-        message.success("批量分享成功");
+        message.success(`成功分享 ${selectedRowKeys.length} 个文件`);
         setSelectedRowKeys([]);
         loadFileList(pagination.current, fileType);
       } else {
@@ -836,11 +878,17 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             <Checkbox
               checked={
                 fileList.length > 0 &&
-                selectedRowKeys.length === fileList.length
+                fileList.every((item) =>
+                  selectedRowKeys.includes(item.id.toString())
+                )
               }
               indeterminate={
-                selectedRowKeys.length > 0 &&
-                selectedRowKeys.length < fileList.length
+                fileList.some((item) =>
+                  selectedRowKeys.includes(item.id.toString())
+                ) &&
+                !fileList.every((item) =>
+                  selectedRowKeys.includes(item.id.toString())
+                )
               }
               onChange={(e) => {
                 e.stopPropagation();
@@ -852,6 +900,11 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             />
           )}
           <span>文件名</span>
+          {selectedRowKeys.length > 0 && (
+            <span className="selected-count">
+              已选择 {selectedRowKeys.length} 个文件
+            </span>
+          )}
         </div>
       ),
       dataIndex: "name",
@@ -1012,6 +1065,16 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       render: (time: number) => formatDateTime(time),
     },
   ];
+
+  // 添加清除所有选择的函数
+  const clearSelection = () => {
+    setSelectedRowKeys([]);
+  };
+
+  // 在搜索和切换文件类型时清除选择
+  useEffect(() => {
+    clearSelection();
+  }, [fileType, searchKeyword]);
 
   return (
     <Content className={`content-main ${actionLoading ? "loading" : ""}`}>

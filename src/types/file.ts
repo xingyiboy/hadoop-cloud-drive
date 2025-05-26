@@ -36,3 +36,15 @@ export interface FileListResponse {
   };
   msg: string;
 }
+
+export interface FileListParams {
+  catalogue?: string;
+  type?: number;
+  name?: string;
+  pageNo: number;
+  pageSize: number;
+  sortField?: string;
+  sortOrder?: string;
+  excludeShared?: boolean;
+  ids?: string[];
+}
