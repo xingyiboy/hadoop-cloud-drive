@@ -18,6 +18,7 @@ import {
   CloudUploadOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import React, { useState } from "react";
@@ -42,7 +43,15 @@ const SiderMain: React.FC<SiderMainProps> = ({
 
   // 获取当前选中的菜单项
   const getSelectedKey = () => {
-    const diskKeys = ["all", "image", "document", "video", "audio", "other"];
+    const diskKeys = [
+      "all",
+      "image",
+      "document",
+      "video",
+      "audio",
+      "other",
+      "recycle",
+    ];
     const path = location.pathname;
 
     // 如果是网盘页面的菜单项，使用状态中保存的选中项
@@ -89,6 +98,11 @@ const SiderMain: React.FC<SiderMainProps> = ({
       key: "other",
       icon: <FileUnknownOutlined />,
       label: "其他",
+    },
+    {
+      key: "recycle",
+      icon: <DeleteOutlined />,
+      label: "回收站",
     },
   ];
 
@@ -163,12 +177,22 @@ const SiderMain: React.FC<SiderMainProps> = ({
   // 处理菜单点击
   const handleMenuClick = ({ key }: { key: string }) => {
     // 网盘页面的特殊处理
-    const diskKeys = ["all", "image", "document", "video", "audio", "other"];
+    const diskKeys = [
+      "all",
+      "image",
+      "document",
+      "video",
+      "audio",
+      "other",
+      "recycle",
+    ];
     if (diskKeys.includes(key)) {
       setSelectedMenuKey(key);
       if (onFileTypeChange) {
         if (key === "all") {
           onFileTypeChange(undefined);
+        } else if (key === "recycle") {
+          onFileTypeChange(FileType.RECYCLE);
         } else {
           onFileTypeChange(
             FileType[key.toUpperCase() as keyof typeof FileType]

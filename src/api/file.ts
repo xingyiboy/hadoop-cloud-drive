@@ -84,7 +84,7 @@ export const getFileList = (params: FileListParams) => {
 };
 
 // 删除文件或目录
-export const deleteFile = (id: number): Promise<ApiResponse<void>> => {
+export const deleteFile = (id: string): Promise<ApiResponse<void>> => {
   return request.delete(`/admin-api/system/hadoop-file/delete?id=${id}`);
 };
 

@@ -26,7 +26,7 @@ import "../layout/style/content-main.scss";
 import BreadcrumbNav from "./BreadcrumbNav";
 import CreateFolderModal from "./CreateFolderModal";
 import { FileType, FileTypeMap, getFileTypeByExt } from "../enums/FileTypeEnum";
-import { createFile, getFileList, downloadFile } from "@/api/file";
+import { createFile, getFileList, downloadFile, deleteFile } from "@/api/file";
 import { FileInfo } from "@/types/file";
 import { useUploadStore } from "@/store/uploadStore";
 import { useDownloadStore } from "@/store/downloadStore";
@@ -38,10 +38,21 @@ interface DiskContentProps {
   fileType: FileType | undefined;
 }
 
+interface FileListResponse {
+  list: FileInfo[];
+  total: number;
+}
+
 interface ApiResponse<T> {
   code: number;
   data: T;
   msg?: string;
+}
+
+interface DownloadResponse extends ApiResponse<Blob> {
+  headers: {
+    [key: string]: string;
+  };
 }
 
 // 在组件外部定义格式化函数
@@ -97,20 +108,21 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         name: searchKeyword,
         pageNo: page,
         pageSize: size,
-        sortField: sortState.field,
-        sortOrder: sortState.order,
+        sortField: sortState.field || undefined,
+        sortOrder: sortState.order || undefined,
       });
       if (res.code === 0 && res.data) {
-        const list = res.data.list || [];
+        const data = (res as unknown as ApiResponse<FileListResponse>).data;
+        const list = data.list || [];
         // 转换 createTime 类型
-        let convertedList = list.map((item) => ({
+        let convertedList = list.map((item: FileInfo) => ({
           ...item,
           createTime: item.createTime.toString(),
         }));
 
         // 如果没有指定排序，使用默认排序：文件夹在前，按名称排序
         if (!sortState.field) {
-          convertedList = convertedList.sort((a, b) => {
+          convertedList = convertedList.sort((a: FileInfo, b: FileInfo) => {
             // 首先按类型排序（文件夹在前）
             if (a.type !== b.type) {
               return b.type === FileType.DIRECTORY ? 1 : -1;
@@ -125,7 +137,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           ...pagination,
           current: page,
           pageSize: size,
-          total: res.data.total || 0,
+          total: data.total || 0,
         });
       } else {
         setFileList([]);
@@ -501,13 +513,16 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         },
       });
 
+      // 检查响应数据
       if (!response.data) {
         throw new Error("下载失败：未收到文件数据");
       }
 
       // 获取文件名
       let filename = record.name;
-      const contentDisposition = response.headers["content-disposition"];
+      const contentDisposition = (response as any).headers?.[
+        "content-disposition"
+      ];
       if (contentDisposition) {
         const matches = /filename\*=UTF-8''(.+)/.exec(contentDisposition);
         if (matches && matches[1]) {
@@ -549,9 +564,47 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
   };
 
   // 处理单个文件删除
-  const handleSingleDelete = (record: FileInfo) => {
-    message.info(`准备删除文件：${record.name}`);
-    // TODO: 实现单个文件删除逻辑
+  const handleSingleDelete = async (record: FileInfo) => {
+    try {
+      const res = await deleteFile(record.id);
+      if (res.code === 0) {
+        message.success("删除成功");
+        // 刷新文件列表
+        loadFileList(pagination.current, fileType);
+      } else {
+        message.error(res.msg || "删除失败");
+      }
+    } catch (error) {
+      message.error("删除失败");
+      console.error("Delete error:", error);
+    }
+  };
+
+  // 处理批量删除
+  const handleBatchDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("请选择要删除的文件");
+      return;
+    }
+
+    try {
+      // 逐个删除选中的文件
+      for (const id of selectedRowKeys) {
+        const res = await deleteFile(id);
+        if (res.code !== 0) {
+          message.error(`删除文件(ID: ${id})失败: ${res.msg}`);
+        }
+      }
+
+      message.success("批量删除完成");
+      // 清空选中状态
+      setSelectedRowKeys([]);
+      // 刷新文件列表
+      loadFileList(pagination.current, fileType);
+    } catch (error) {
+      message.error("批量删除失败");
+      console.error("Batch delete error:", error);
+    }
   };
 
   // 表格列定义
@@ -623,7 +676,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 }}
               />
               <DeleteOutlined
-                className="action-icon"
+                className="action-icon danger"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSingleDelete(record);
@@ -697,6 +750,13 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               </Button>
               <Button icon={<ShareAltOutlined />} onClick={handleBatchShare}>
                 分享
+              </Button>
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={handleBatchDelete}
+              >
+                删除
               </Button>
             </>
           )}
