@@ -60,6 +60,7 @@ const { Content } = Layout;
 
 interface DiskContentProps {
   fileType: FileType | undefined;
+  activeTab?: number;
 }
 
 interface FileListResponse {
@@ -1553,6 +1554,15 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     }
   };
 
+  // 添加一个辅助函数来检查文件类型
+  const isRecycleBin = (type: FileType | undefined): boolean => {
+    return type === FileType.RECYCLE;
+  };
+
+  const isSharedFiles = (type: FileType | undefined): boolean => {
+    return type === FileType.SHARE;
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -1597,7 +1607,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       ellipsis: true,
       sorter: true,
       render: (text: string, record: FileInfo) => {
-        if (fileType === FileType.RECYCLE) {
+        if (isRecycleBin(fileType)) {
           return (
             <div className="file-name-cell">
               <Checkbox
@@ -1706,7 +1716,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               )}
               {editingFileId !== record.id.toString() && (
                 <div className="file-actions">
-                  {fileType === FileType.RECYCLE ? (
+                  {isRecycleBin(fileType) ? (
                     <Button
                       type="link"
                       icon={<UndoOutlined />}
@@ -1815,7 +1825,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     >
       <div className="operation-bar">
         <div className="left-buttons">
-          {fileType === FileType.RECYCLE ? (
+          {isRecycleBin(fileType) ? (
             selectedRowKeys.length > 0 && (
               <>
                 <Button
@@ -1841,7 +1851,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                 </Button>
               </>
             )
-          ) : fileType === FileType.SHARE ? (
+          ) : isSharedFiles(fileType) ? (
             selectedRowKeys.length > 0 && (
               <Button
                 type="primary"
@@ -2109,7 +2119,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                   <span>{formatDateTime(Number(file.createTime))}</span>
                 </div>
                 <div className="grid-item-actions">
-                  {fileType === FileType.RECYCLE ? (
+                  {isRecycleBin(fileType) ? (
                     <Button
                       type="link"
                       icon={<UndoOutlined />}
