@@ -1474,6 +1474,85 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     </Menu>
   );
 
+  // 在API调用部分添加永久删除的方法
+  const permanentDeleteFile = (id: string): Promise<ApiResponse<void>> => {
+    return request.delete(`/admin-api/system/hadoop-file/delete?id=${id}`);
+  };
+
+  // 添加永久删除的处理函数
+  const handlePermanentDelete = async (record: FileInfo) => {
+    try {
+      const confirmed = await new Promise((resolve) => {
+        Modal.confirm({
+          title: "永久删除确认",
+          content: "此操作将永久删除该文件，无法恢复，是否继续？",
+          okText: "确认删除",
+          cancelText: "取消",
+          okButtonProps: { danger: true },
+          onOk: () => resolve(true),
+          onCancel: () => resolve(false),
+        });
+      });
+
+      if (confirmed) {
+        setActionLoading(true);
+        const res = await permanentDeleteFile(record.id.toString());
+        if (res.code === 0) {
+          message.success("永久删除成功");
+          loadFileList(pagination.current, fileType);
+        } else {
+          message.error(res.msg || "永久删除失败");
+        }
+      }
+    } catch (error) {
+      message.error("永久删除失败");
+      console.error("Permanent delete error:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // 添加批量永久删除的处理函数
+  const handleBatchPermanentDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("请选择要永久删除的文件");
+      return;
+    }
+
+    try {
+      const confirmed = await new Promise((resolve) => {
+        Modal.confirm({
+          title: "批量永久删除确认",
+          content: `此操作将永久删除选中的 ${selectedRowKeys.length} 个文件，无法恢复，是否继续？`,
+          okText: "确认删除",
+          cancelText: "取消",
+          okButtonProps: { danger: true },
+          onOk: () => resolve(true),
+          onCancel: () => resolve(false),
+        });
+      });
+
+      if (confirmed) {
+        setActionLoading(true);
+        for (const id of selectedRowKeys) {
+          const res = await permanentDeleteFile(id);
+          if (res.code !== 0) {
+            message.error(`永久删除文件(ID: ${id})失败: ${res.msg}`);
+          }
+        }
+
+        message.success("批量永久删除完成");
+        setSelectedRowKeys([]);
+        loadFileList(pagination.current, fileType);
+      }
+    } catch (error) {
+      message.error("批量永久删除失败");
+      console.error("Batch permanent delete error:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -1518,8 +1597,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       ellipsis: true,
       sorter: true,
       render: (text: string, record: FileInfo) => {
-        if (fileType === 8) {
-          const actualName = text.split("/").pop() || text;
+        if (fileType === FileType.RECYCLE) {
           return (
             <div className="file-name-cell">
               <Checkbox
@@ -1552,7 +1630,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                     disabled={isRenaming}
                   />
                 ) : (
-                  <span className="file-name-text">{actualName}</span>
+                  <span className="file-name-text">{text}</span>
                 )}
                 <div className="file-actions">
                   <Button
@@ -1561,14 +1639,30 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!actionLoading) {
-                        handleCancelShare(record);
+                        handleSingleRestore(record);
                       }
                     }}
                     disabled={actionLoading}
                     loading={actionLoading}
                     className={actionLoading ? "disabled" : ""}
                   >
-                    取消分享
+                    恢复
+                  </Button>
+                  <Button
+                    type="link"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!actionLoading) {
+                        handlePermanentDelete(record);
+                      }
+                    }}
+                    disabled={actionLoading}
+                    loading={actionLoading}
+                    className={actionLoading ? "disabled" : ""}
+                  >
+                    永久删除
                   </Button>
                 </div>
               </div>
@@ -1612,7 +1706,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
               )}
               {editingFileId !== record.id.toString() && (
                 <div className="file-actions">
-                  {fileType === 7 ? (
+                  {fileType === FileType.RECYCLE ? (
                     <Button
                       type="link"
                       icon={<UndoOutlined />}
@@ -1624,7 +1718,6 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                       }}
                       disabled={actionLoading}
                       loading={actionLoading}
-                      className={actionLoading ? "disabled" : ""}
                     >
                       恢复
                     </Button>
@@ -1722,20 +1815,33 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
     >
       <div className="operation-bar">
         <div className="left-buttons">
-          {fileType === 7 ? (
+          {fileType === FileType.RECYCLE ? (
             selectedRowKeys.length > 0 && (
-              <Button
-                type="primary"
-                icon={<UndoOutlined />}
-                onClick={handleBatchRestore}
-                disabled={actionLoading}
-                loading={actionLoading}
-              >
-                恢复{" "}
-                {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
-              </Button>
+              <>
+                <Button
+                  type="primary"
+                  icon={<UndoOutlined />}
+                  onClick={handleBatchRestore}
+                  disabled={actionLoading}
+                  loading={actionLoading}
+                >
+                  恢复{" "}
+                  {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
+                </Button>
+                <Button
+                  type="primary"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={handleBatchPermanentDelete}
+                  disabled={actionLoading}
+                  loading={actionLoading}
+                >
+                  永久删除{" "}
+                  {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
+                </Button>
+              </>
             )
-          ) : fileType === 8 ? (
+          ) : fileType === FileType.SHARE ? (
             selectedRowKeys.length > 0 && (
               <Button
                 type="primary"
@@ -2003,7 +2109,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
                   <span>{formatDateTime(Number(file.createTime))}</span>
                 </div>
                 <div className="grid-item-actions">
-                  {fileType === 7 ? (
+                  {fileType === FileType.RECYCLE ? (
                     <Button
                       type="link"
                       icon={<UndoOutlined />}
