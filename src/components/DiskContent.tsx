@@ -237,7 +237,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           const groupedFiles: { [key: string]: FileInfo[] } = {};
           convertedList.forEach((file: FileInfo) => {
             // 假设分享文件的名称格式为：分享/[shareKey]/filename
-            const match = file.name.match(/^分享\/([^/]+)\//);
+            const match = file.name.match(/^分享（hadoop）\/([^/]+)\//);
             if (match) {
               const shareKey = match[1];
               if (!groupedFiles[shareKey]) {

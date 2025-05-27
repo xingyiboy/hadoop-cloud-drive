@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-04-28 17:45:53
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-27 10:04:16
+ * @LastEditTime: 2025-05-27 10:38:13
  * @FilePath: \CloudDiskWeb\src\utils\request.ts
  */
 // 封装 axios
@@ -20,7 +20,8 @@ export interface ApiResponse<T> {
 }
 
 const instance: AxiosInstance = axios.create({
-  baseURL: "http://113.45.31.128:6767",
+  // baseURL: "http://113.45.31.128:6767",
+  baseURL: "http://localhost:48080",
   timeout: 60000,
 });
 
