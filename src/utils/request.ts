@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-04-28 17:45:53
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-26 15:12:49
+ * @LastEditTime: 2025-05-27 10:04:16
  * @FilePath: \CloudDiskWeb\src\utils\request.ts
  */
 // 封装 axios
@@ -20,7 +20,7 @@ export interface ApiResponse<T> {
 }
 
 const instance: AxiosInstance = axios.create({
-  baseURL: "http://localhost:48080",
+  baseURL: "http://113.45.31.128:6767",
   timeout: 60000,
 });
 
@@ -68,6 +68,7 @@ instance.interceptors.response.use(
     if (res.code === 401) {
       // 未登录或token过期
       window.location.hash = "#/login";
+      message.error(res.msg || "登录失效");
       return Promise.reject(new Error("请先登录"));
     }
     if (res.code !== 0) {
@@ -80,10 +81,11 @@ instance.interceptors.response.use(
     if (error.response?.status === 401) {
       // 未登录或token过期
       window.location.hash = "#/login";
-      return Promise.reject(new Error("请先登录"));
+      message.error(error.response?.data?.msg || error.message || "请先登录");
+      return Promise.reject(error.response?.data || error);
     }
-    message.error(error.message || "网络错误");
-    return Promise.reject(error);
+    message.error(error.response?.data?.msg || error.message || "网络错误");
+    return Promise.reject(error.response?.data || error);
   }
 );
 

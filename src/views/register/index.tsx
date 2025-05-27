@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-04-28 14:48:50
  * @LastEditors: xingyi && 2416820386@qq.com
- * @LastEditTime: 2025-05-08 14:33:54
+ * @LastEditTime: 2025-05-27 10:16:45
  * @FilePath: \CloudDiskWeb\src\views\register\index.tsx
  */
 import "./index.scss";
@@ -43,7 +43,7 @@ function Register() {
         },
       });
     } catch (error: any) {
-      message.error(error || "注册失败");
+      message.error( "注册失败");
     }
   };
 
