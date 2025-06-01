@@ -343,10 +343,14 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       const taskId = `${file.name}-${Date.now()}-${Math.random()}`;
       return {
         id: taskId,
-        file: file as File,
+        file,
         catalogue: currentPath,
+        status: "pending" as const,
+        progress: 0,
+        createTime: Date.now(),
+        elapsedSeconds: 0,
+        sizeInBytes: file.size,
         deleteTask: () => handleDeleteUploadTask(taskId),
-        status: "pending",
       };
     });
 
@@ -561,9 +565,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
         // 生成下载任务
         const tasks = files.map((file) => {
           const taskId = `${file.name}-${Date.now()}-${Math.random()}`;
-          const sizeInMB = file.size ? parseFloat(file.size) : 0;
-          const sizeInBytes = sizeInMB * 1024 * 1024;
-
+          const sizeInBytes = parseFloat(file.size || "0");
           return {
             id: taskId,
             file: {
@@ -574,6 +576,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
             status: "pending" as const,
             progress: 0,
             error: undefined,
+            elapsedSeconds: 0,
+            sizeInBytes: sizeInBytes,
             deleteTask: () => handleDeleteDownloadTask(taskId),
           };
         });
@@ -670,6 +674,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           status: "pending" as const,
           progress: 0,
           error: undefined,
+          elapsedSeconds: 0,
+          sizeInBytes: parseFloat(record.size || "0"),
           deleteTask: () => handleDeleteDownloadTask(taskId),
         };
 
@@ -913,9 +919,7 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       // 生成下载任务
       const tasks = allSelectedFiles.map((file) => {
         const taskId = `${file.name}-${Date.now()}-${Math.random()}`;
-        const sizeInMB = file.size ? parseFloat(file.size) : 0;
-        const sizeInBytes = sizeInMB * 1024 * 1024;
-
+        const sizeInBytes = parseFloat(file.size || "0");
         return {
           id: taskId,
           file: {
@@ -926,6 +930,8 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
           status: "pending" as const,
           progress: 0,
           error: undefined,
+          elapsedSeconds: 0,
+          sizeInBytes: sizeInBytes,
           deleteTask: () => handleDeleteDownloadTask(taskId),
         };
       });

@@ -16,14 +16,15 @@ export interface DownloadTask {
   id: string;
   file: {
     name: string;
-    size: number | string;
-    type: number;
+    size: number;
+    type: any; // 这里使用实际的 FileType 类型
   };
   status: DownloadStatus;
   progress: number;
   error?: string;
   elapsedSeconds: number;
   sizeInBytes: number;
+  deleteTask: () => void;
 }
 
 export interface DownloadStore {

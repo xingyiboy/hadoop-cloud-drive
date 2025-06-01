@@ -41,7 +41,7 @@ export const useDownloadStore = create<DownloadStore>()(
               const sizeInBytes =
                 typeof task.file.size === "number"
                   ? task.file.size
-                  : convertToBytes(parseFloat(task.file.size.toString()), "MB");
+                  : task.file.size;
 
               return {
                 ...task,

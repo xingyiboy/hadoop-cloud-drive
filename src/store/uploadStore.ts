@@ -2,18 +2,19 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { indexedDBService } from "@/services/indexedDB";
 import { UPLOAD_SPEED, calculateProgress } from "@/utils/progress";
-import { UploadTask, UploadStatus } from "../types/upload";
+import { UploadStatus } from "../types/upload";
 
 export interface UploadTask {
   id: string;
   file: File;
   progress: number;
-  status: "pending" | "uploading" | "success" | "failed";
+  status: UploadStatus;
   catalogue: string;
   createTime: number;
   error?: string;
   elapsedSeconds: number;
   sizeInBytes: number;
+  deleteTask?: () => void;
 }
 
 interface CreateTask {

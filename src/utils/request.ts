@@ -22,7 +22,7 @@ export interface ApiResponse<T> {
 const instance: AxiosInstance = axios.create({
   baseURL: "http://113.45.31.128:6767",
   // baseURL: "http://localhost:48080",
-  timeout: 60000,
+  timeout: 600000000,
 });
 
 // 请求拦截器
