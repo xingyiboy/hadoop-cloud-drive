@@ -919,19 +919,19 @@ const DiskContent: React.FC<DiskContentProps> = ({ fileType }) => {
       // 生成下载任务
       const tasks = allSelectedFiles.map((file) => {
         const taskId = `${file.name}-${Date.now()}-${Math.random()}`;
-        const sizeInBytes = parseFloat(file.size || "0");
+        const fileSize = parseFloat(file.size || "0");
         return {
           id: taskId,
           file: {
             name: file.name,
-            size: sizeInBytes,
+            size: fileSize,
             type: file.type,
           },
           status: "pending" as const,
           progress: 0,
           error: undefined,
           elapsedSeconds: 0,
-          sizeInBytes: sizeInBytes,
+          sizeInBytes: fileSize,
           deleteTask: () => handleDeleteDownloadTask(taskId),
         };
       });

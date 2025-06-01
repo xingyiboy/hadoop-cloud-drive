@@ -11,7 +11,6 @@ import {
 } from "antd";
 import { useLocation } from "react-router-dom";
 import { useDownloadStore } from "../store/downloadStore";
-import { formatFileSize } from "@/utils/format";
 import { DeleteOutlined } from "@ant-design/icons";
 import { DownloadStore, DownloadTask, DownloadStatus } from "../types/download";
 import "./DownloadingContent.scss";
@@ -146,11 +145,7 @@ const DownloadingContent: React.FC = () => {
                   <div className="task-info">
                     <Text>{task.file.name}</Text>
                     <Text className="task-size">
-                      {formatFileSize(
-                        typeof task.file.size === "number"
-                          ? task.file.size
-                          : parseFloat(task.file.size)
-                      )}
+                      {task.file.size ? `${task.file.size.toFixed(2)} MB` : "-"}
                     </Text>
                     {getStatusTag(task.status)}
                   </div>
