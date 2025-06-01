@@ -1,5 +1,14 @@
 import React from "react";
-import { List, Progress, Empty, Typography, Button, Modal, Layout } from "antd";
+import {
+  List,
+  Progress,
+  Empty,
+  Typography,
+  Button,
+  Modal,
+  Layout,
+  Tag,
+} from "antd";
 import { useLocation } from "react-router-dom";
 import { useUploadStore } from "@/store/uploadStore";
 import { formatFileSize } from "@/utils/format";
@@ -12,6 +21,7 @@ const { Content } = Layout;
 const UploadingContent: React.FC = () => {
   const location = useLocation();
   const tasks = useUploadStore((state) => state.tasks);
+  const uploadingTaskId = useUploadStore((state) => state.uploadingTaskId);
   const clearTasksByStatus = useUploadStore(
     (state) => state.clearTasksByStatus
   );
@@ -24,6 +34,7 @@ const UploadingContent: React.FC = () => {
   };
 
   const getCurrentStatus = ():
+    | "pending"
     | "uploading"
     | "success"
     | "failed"
@@ -36,6 +47,12 @@ const UploadingContent: React.FC = () => {
 
   const getFilteredTasks = () => {
     const status = getCurrentStatus();
+    if (status === "uploading") {
+      // 显示正在上传和等待上传的任务
+      return tasks.filter(
+        (task) => task.status === "uploading" || task.status === "pending"
+      );
+    }
     if (status) {
       return tasks.filter((task) => task.status === status);
     }
@@ -43,9 +60,11 @@ const UploadingContent: React.FC = () => {
   };
 
   const getTaskStatusStyle = (
-    status: "uploading" | "success" | "failed"
-  ): "success" | "danger" | undefined => {
+    status: "pending" | "uploading" | "success" | "failed"
+  ): "success" | "warning" | "danger" | undefined => {
     switch (status) {
+      case "pending":
+        return "warning";
       case "uploading":
         return undefined;
       case "success":
@@ -58,9 +77,11 @@ const UploadingContent: React.FC = () => {
   };
 
   const getStatusText = (
-    status: "uploading" | "success" | "failed"
+    status: "pending" | "uploading" | "success" | "failed"
   ): string => {
     switch (status) {
+      case "pending":
+        return "等待上传";
       case "uploading":
         return "正在上传";
       case "success":
@@ -70,6 +91,23 @@ const UploadingContent: React.FC = () => {
       default:
         return "";
     }
+  };
+
+  const getStatusTag = (
+    status: "pending" | "uploading" | "success" | "failed"
+  ) => {
+    const colors = {
+      pending: "gold",
+      uploading: "processing",
+      success: "success",
+      failed: "error",
+    };
+
+    return (
+      <Tag color={colors[status]} style={{ marginLeft: 8 }}>
+        {getStatusText(status)}
+      </Tag>
+    );
   };
 
   const handleClearTasks = () => {
@@ -118,9 +156,15 @@ const UploadingContent: React.FC = () => {
                     <Text className="task-size">
                       {formatFileSize(task.file.size)}
                     </Text>
+                    {getStatusTag(task.status)}
                   </div>
-                  {task.status === "uploading" ? (
+                  {task.status === "uploading" &&
+                  task.id === uploadingTaskId ? (
                     <Progress percent={task.progress} status="active" />
+                  ) : task.status === "pending" ? (
+                    <div className="pending-status">
+                      <Text type="warning">等待上传中...</Text>
+                    </div>
                   ) : (
                     <Text type={getTaskStatusStyle(task.status)}>
                       {getStatusText(task.status)}

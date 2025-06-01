@@ -16,12 +16,14 @@ export interface DownloadTask {
   id: string;
   file: {
     name: string;
-    size: number;
+    size: number | string;
     type: number;
   };
   status: DownloadStatus;
   progress: number;
   error?: string;
+  elapsedSeconds: number;
+  sizeInBytes: number;
 }
 
 export interface DownloadStore {

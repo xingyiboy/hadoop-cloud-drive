@@ -1,5 +1,14 @@
 import React from "react";
-import { List, Progress, Empty, Typography, Button, Modal, Layout } from "antd";
+import {
+  List,
+  Progress,
+  Empty,
+  Typography,
+  Button,
+  Modal,
+  Layout,
+  Tag,
+} from "antd";
 import { useLocation } from "react-router-dom";
 import { useDownloadStore } from "../store/downloadStore";
 import { formatFileSize } from "@/utils/format";
@@ -78,6 +87,21 @@ const DownloadingContent: React.FC = () => {
     }
   };
 
+  const getStatusTag = (status: DownloadStatus) => {
+    const colors = {
+      pending: "gold",
+      downloading: "processing",
+      downloaded: "success",
+      failed: "error",
+    };
+
+    return (
+      <Tag color={colors[status]} style={{ marginLeft: 8 }}>
+        {getStatusText(status)}
+      </Tag>
+    );
+  };
+
   const handleClearTasks = () => {
     const status = getCurrentStatus();
     const statusText = status ? getStatusText(status) : "所有";
@@ -122,13 +146,20 @@ const DownloadingContent: React.FC = () => {
                   <div className="task-info">
                     <Text>{task.file.name}</Text>
                     <Text className="task-size">
-                      {formatFileSize(task.file.size)}
+                      {formatFileSize(
+                        typeof task.file.size === "number"
+                          ? task.file.size
+                          : parseFloat(task.file.size)
+                      )}
                     </Text>
+                    {getStatusTag(task.status)}
                   </div>
                   {task.status === "downloading" ? (
                     <Progress percent={task.progress} status="active" />
                   ) : task.status === "pending" ? (
-                    <Text type="warning">等待下载</Text>
+                    <div className="pending-status">
+                      <Text type="warning">等待下载中...</Text>
+                    </div>
                   ) : (
                     <Text type={getTaskStatusStyle(task.status)}>
                       {getStatusText(task.status)}
