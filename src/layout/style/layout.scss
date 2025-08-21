@@ -1,0 +1,51 @@
+.ant-layout {
+  // 去除整体边距
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #eff4f8 !important; // 设置整体背景色
+
+  // 去除侧边栏边距
+  .ant-layout-sider {
+    margin: 2em 0 0 0;
+    padding: 0 !important;
+    background: #eff4f8 !important; // 侧边栏背景色
+
+    // 侧边栏菜单背景色
+    .ant-menu {
+      background: #eff4f8 !important;
+    }
+  }
+
+  // 内部布局也需要设置背景色
+  > .ant-layout {
+    background: #eff4f8 !important;
+  }
+
+  // 去除内容区边距
+  .ant-layout-content {
+    margin: 1.2em 2em 2em 0.2em;
+    padding: 0 !important;
+    background: #fff !important; // 内容区保持白色背景
+  }
+
+  // 去除头部边距
+  .ant-layout-header {
+    margin: 0 !important;
+    padding: 0 24px !important;
+    background: #eff4f8 !important;
+
+    // 确保头部菜单背景色正确
+    .ant-menu {
+      background: #eff4f8 !important;
+
+      .ant-menu-item {
+        background: #eff4f8 !important;
+        margin: 0 4px !important;
+
+        &:hover {
+          background: #e6ebef !important;
+        }
+      }
+    }
+  }
+}
