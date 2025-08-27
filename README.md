@@ -252,11 +252,11 @@ pnpm run build
 
 **Redis配置**(`backend/yudao-server/src/main/resources/application-dev.yaml`)
 
-![image-20250827151445692](README.assets\image-20250827151445692.png)
+![image-20250827172345074](README.assets/image-20250827172345074.png)
 
 **Hadoop配置(`backend\yudao-module-system\yudao-module-system-biz\src\main\java\cn\iocoder\yudao\module\system\service\hadoopfile\HadoopFileServiceImpl.java`)**
 
-![image-20250827151142580](README.assets\image-20250827151142580.png)
+![image-20250827172402863](README.assets/image-20250827172402863.png)
 
 ## 🌟 主要功能
 
@@ -295,7 +295,7 @@ pnpm run build
 
 ## 🖼️ 界面预览
 
-> ![image-20250827151558585](README.assets\image-20250827151558585.png)
+> ![image-20250827151558585](README.assets/image-20250827151558585-1756286656328.png)
 >
 > ![image-20250827151609452](README.assets\image-20250827151609452.png)
 >
