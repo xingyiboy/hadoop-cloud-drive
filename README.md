@@ -246,7 +246,9 @@ pnpm run build
 
 **数据库配置** (`backend/yudao-server/src/main/resources/application-dev.yaml`)
 
-![image-20250827151426009](README.assets\image-20250827151426009.png)
+![image-20250827151426009](README.assets\image-20250827151426009.png
+
+![image-20250827172218918](README.assets/image-20250827172218918.png)
 
 **Redis配置**(`backend/yudao-server/src/main/resources/application-dev.yaml`)
 
