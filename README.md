@@ -12,8 +12,6 @@
 
 本项目是一个基于Hadoop分布式文件系统的企业级云盘解决方案，提供了完整的文件存储、管理和分享功能。系统采用前后端分离架构，前端使用React + TypeScript构建现代化用户界面，后端基于Spring Boot + Hadoop实现高可用的分布式存储服务。
 
-在线访问：http://113.45.31.128:9633/
-
 ### 🌟 核心特性
 
 - **分布式存储**：基于Hadoop HDFS，支持海量文件存储和高可用性
@@ -248,15 +246,15 @@ pnpm run build
 
 **数据库配置** (`backend/yudao-server/src/main/resources/application-dev.yaml`)
 
-![image-20250827151426009](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827151426009.png)
+![image-20250827151426009](README.assets\image-20250827151426009.png)
 
 **Redis配置**(`backend/yudao-server/src/main/resources/application-dev.yaml`)
 
-![image-20250827151445692](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827151445692.png)
+![image-20250827151445692](README.assets\image-20250827151445692.png)
 
 **Hadoop配置(`backend\yudao-module-system\yudao-module-system-biz\src\main\java\cn\iocoder\yudao\module\system\service\hadoopfile\HadoopFileServiceImpl.java`)**
 
-![image-20250827151142580](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827151142580.png)
+![image-20250827151142580](README.assets\image-20250827151142580.png)
 
 ## 🌟 主要功能
 
@@ -295,37 +293,39 @@ pnpm run build
 
 ## 🖼️ 界面预览
 
-> ![image-20250827151558585](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827151558585.png)
+> ![image-20250827151558585](README.assets\image-20250827151558585.png)
 >
-> ![image-20250827151609452](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827151609452.png)
+> ![image-20250827151609452](README.assets\image-20250827151609452.png)
 >
-> ![image-20250827151813832](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827151813832.png)
+> ![image-20250827151813832](README.assets\image-20250827151813832.png)
 >
-> ![image-20250827151907900](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827151907900.png)![image-20250827151914424](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827151914424.png)
+> ![image-20250827151907900](README.assets\image-20250827151907900.png)
 >
-> ![image-20250827151922535](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827151922535.png)
+> ![image-20250827151914424](README.assets\image-20250827151914424.png)
 >
-> ![image-20250827151950964](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827151950964.png)
+> ![image-20250827151922535](README.assets\image-20250827151922535.png)
 >
-> ![image-20250827152016921](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827152016921.png)
+> ![image-20250827151950964](README.assets\image-20250827151950964.png)
 >
-> ![image-20250827152100765](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827152100765.png)
+> ![image-20250827152016921](README.assets\image-20250827152016921.png)
 >
-> ![image-20250827152117663](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827152117663.png)
+> ![image-20250827152100765](README.assets\image-20250827152100765.png)
 >
-> ![image-20250827152127292](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827152127292.png)
+> ![image-20250827152117663](README.assets\image-20250827152117663.png)
 >
-> ![image-20250827152259619](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827152259619.png)
+> ![image-20250827152127292](README.assets\image-20250827152127292.png)
 >
-> ![image-20250827163553364](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827163553364.png)
+> ![image-20250827152259619](README.assets\image-20250827152259619.png)
 >
-> ![image-20250827163543808](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827163543808.png)
+> ![image-20250827163553364](README.assets\image-20250827163553364.png)
 >
-> ![image-20250827163621107](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827163621107.png)
+> ![image-20250827163543808](README.assets\image-20250827163543808.png)
 >
-> ![image-20250827164953756](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827164953756.png)
+> ![image-20250827163621107](README.assets\image-20250827163621107.png)
 >
-> ![image-20250827165032207](C:\Users\issuser\AppData\Roaming\Typora\typora-user-images\image-20250827165032207.png)
+> ![image-20250827164953756](README.assets\image-20250827164953756.png)
+>
+> ![image-20250827165032207](README.assets\image-20250827165032207.png)
 >
 > 
 
