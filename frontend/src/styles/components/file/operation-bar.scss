@@ -1,0 +1,62 @@
+/**
+ * 操作栏样式
+ */
+.operation-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+
+  .left-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .selected-count {
+      color: #666;
+      font-size: 14px;
+      margin-left: 16px;
+    }
+  }
+
+  .right-search {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .search-input {
+      width: 300px;
+      
+      .anticon-close {
+        transition: color 0.3s ease;
+        
+        &:hover {
+          color: #1890ff !important;
+        }
+      }
+    }
+
+    .view-switch {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      .anticon {
+        padding: 4px;
+        cursor: pointer;
+        color: #666;
+        transition: color 0.3s ease;
+
+        &:hover {
+          color: #1890ff;
+        }
+
+        &.active {
+          color: #1890ff;
+        }
+      }
+    }
+  }
+}

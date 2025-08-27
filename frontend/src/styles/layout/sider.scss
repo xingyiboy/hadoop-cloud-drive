@@ -1,0 +1,40 @@
+/**
+ * 侧边栏样式
+ */
+@import '../variables.scss';
+
+.ant-layout-sider {
+  .ant-menu-inline {
+    // 去掉右边蓝色指示条
+    .ant-menu-item::after {
+      display: none !important;
+    }
+
+    // 选中项样式
+    .ant-menu-item-selected {
+      background-color: $background-selected !important;
+      color: $primary-color !important;
+      font-weight: 500;
+      margin: 0 !important;
+    }
+
+    // hover效果
+    .ant-menu-item:hover {
+      background-color: $background-selected !important;
+      transition: $transition-base;
+    }
+
+    // 菜单项样式
+    .ant-menu-item {
+      height: 40px;
+      line-height: 40px;
+      margin: 0 !important;
+      border-radius: 0;
+
+      // 图标样式
+      .anticon {
+        font-size: $font-size-lg;
+      }
+    }
+  }
+}

@@ -1,0 +1,175 @@
+/**
+ * 布局主样式
+ */
+@import '../variables.scss';
+
+.ant-layout {
+  // 去除整体边距
+  margin: 0 !important;
+  padding: 0 !important;
+  background: $background-light !important;
+
+  // 去除侧边栏边距
+  .ant-layout-sider {
+    margin: 2em 0 0 0;
+    padding: 0 !important;
+    background: $background-light !important;
+
+    // 侧边栏菜单背景色
+    .ant-menu {
+      background: $background-light !important;
+    }
+  }
+
+  // 内部布局也需要设置背景色
+  > .ant-layout {
+    background: $background-light !important;
+  }
+
+  // 去除内容区边距
+  .ant-layout-content {
+    margin: 1.2em 2em 2em 0.2em;
+    padding: 0 !important;
+    background: $white !important;
+  }
+
+  // 去除头部边距
+  .ant-layout-header {
+    margin: 0 !important;
+    padding: 0 $content-padding !important;
+    background: $background-light !important;
+
+    // 确保头部菜单背景色正确
+    .ant-menu {
+      background: $background-light !important;
+
+      .ant-menu-item {
+        background: $background-light !important;
+        margin: 0 $item-padding-xs !important;
+        transition: $transition-base;
+
+        &:hover {
+          background: $background-hover !important;
+        }
+      }
+    }
+  }
+}
+
+// 用户配置文件模态框样式
+.profile-form {
+  .form-content {
+    .form-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      align-items: flex-start;
+
+      .ant-form-item {
+        flex: 1;
+        margin-bottom: 0;
+        min-width: 0; // 防止内容溢出
+      }
+
+      // 确保标签宽度一致
+      .ant-form-item-label {
+        min-width: 80px;
+        text-align: right;
+        
+        > label {
+          color: #333;
+          font-weight: 500;
+          white-space: nowrap;
+        }
+      }
+
+      // 确保输入框容器宽度一致
+      .ant-form-item-control {
+        max-width: 100%;
+      }
+    }
+
+    // 只有两个字段的行特殊处理
+    .form-row-two {
+      .ant-form-item {
+        &:nth-child(1),
+        &:nth-child(2) {
+          flex: 1;
+          max-width: calc(50% - 10px);
+        }
+      }
+    }
+  }
+
+  // 可编辑字段样式
+  .editable-field {
+    .ant-input,
+    .ant-select-selector {
+      transition: all 0.3s ease;
+      
+      &:not(:disabled) {
+        background-color: #fff !important;
+        border: 2px solid #1890ff !important;
+        box-shadow: 0 0 4px rgba(24, 144, 255, 0.3) !important;
+        
+        &:hover {
+          border-color: #40a9ff !important;
+          box-shadow: 0 0 6px rgba(24, 144, 255, 0.4) !important;
+        }
+        
+        &:focus {
+          border-color: #096dd9 !important;
+          box-shadow: 0 0 8px rgba(24, 144, 255, 0.5) !important;
+        }
+      }
+    }
+
+    .ant-select {
+      width: 100% !important;
+    }
+
+    .ant-form-item-label > label::before {
+      content: '✏️ ';
+      margin-right: 4px;
+    }
+  }
+
+  // 只读字段样式
+  .readonly-field {
+    .ant-input,
+    .ant-select-selector {
+      background-color: #f5f5f5 !important;
+      border: 1px solid #e8e8e8 !important;
+      color: #999 !important;
+      cursor: not-allowed !important;
+    }
+
+    .ant-select {
+      width: 100% !important;
+    }
+
+    .ant-select-disabled .ant-select-selector {
+      background-color: #f5f5f5 !important;
+      color: #999 !important;
+    }
+  }
+
+  // 头像区域样式
+  .ant-avatar {
+    border: 3px solid #f0f0f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  // 按钮区域样式
+  .ant-btn {
+    min-width: 80px;
+    transition: all 0.3s ease;
+  }
+
+  // 确保所有输入框高度一致
+  .ant-input,
+  .ant-select-selector {
+    height: 32px;
+    line-height: 30px;
+  }
+}

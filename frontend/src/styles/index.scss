@@ -1,0 +1,44 @@
+/**
+ * 主样式入口文件
+ */
+
+// 基础样式重置
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+#root {
+  height: 100%;
+  font-size: 14px;
+  color: #9e9e9e;
+  font-weight: 500;
+}
+
+.App {
+  height: 100%;
+}
+
+// 导入变量
+@import './variables.scss';
+
+// 导入布局样式
+@import './layout/index.scss';
+@import './layout/header.scss';
+@import './layout/sider.scss';
+@import './layout/content.scss';
+
+// 导入组件样式
+@import './components/file/file-grid.scss';
+@import './components/file/file-table.scss';
+@import './components/file/operation-bar.scss';
+@import './components/upload/upload-indicator.scss';
+@import './components/upload/uploading-content.scss';
+@import './components/download/download-indicator.scss';
+@import './components/download/downloading-content.scss';
+@import './components/share/share-download-modal.scss';
+
+// 导入视图样式
+@import './views/login.scss';
+@import './views/share.scss';
