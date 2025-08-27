@@ -1,0 +1,22 @@
+/**
+ * 上传指示器样式
+ */
+.upload-indicator {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+
+  .ant-badge {
+    .ant-badge-count {
+      background: #ff4d4f;
+    }
+  }
+
+  .ant-btn {
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+}

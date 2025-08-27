@@ -1,0 +1,58 @@
+/*
+ * @Date: 2025-01-15 20:00:00
+ * @LastEditors: xingyi && 2416820386@qq.com
+ * @LastEditTime: 2025-01-15 20:00:00
+ * @FilePath: \CloudDiskWeb\src\styles\variables.scss
+ */
+
+// 色彩变量
+$primary-color: #1677ff;
+$primary-color-hover: #4096ff;
+$background-light: #eff4f8;
+$background-hover: #e6ebef;
+$background-selected: #e3e8eb;
+$border-color: #f0f0f0;
+$text-color: #333;
+$text-color-secondary: #666;
+$text-color-disabled: #999;
+$white: #fff;
+$danger-color: #ff4d4f;
+$success-color: #52c41a;
+
+// 尺寸变量
+$header-height: 64px;
+$sider-width: 200px;
+$border-radius: 4px;
+$border-radius-lg: 8px;
+$content-padding: 24px;
+$item-padding: 16px;
+$item-padding-sm: 8px;
+$item-padding-xs: 4px;
+
+// 间距变量
+$margin-sm: 8px;
+$margin-md: 16px;
+$margin-lg: 24px;
+$gap-sm: 8px;
+$gap-md: 16px;
+$gap-lg: 24px;
+
+// 字体大小
+$font-size-sm: 12px;
+$font-size-base: 14px;
+$font-size-lg: 16px;
+$font-size-xl: 18px;
+
+// 阴影
+$box-shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+$box-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.15);
+$box-shadow-deep: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+// 过渡动画
+$transition-base: all 0.3s;
+$transition-fast: all 0.2s;
+
+// Z-index层级
+$z-index-dropdown: 1000;
+$z-index-modal: 1001;
+$z-index-tooltip: 1002;

@@ -45,9 +45,9 @@ public class HadoopFileServiceImpl implements HadoopFileService {
     private HadoopFileMapper hadoopFileMapper;
 
     // HDFS服务器配置
-    private static final String NAMENODE_HOST = "113.45.31.128";
+    private static final String NAMENODE_HOST = "localhost";
     private static final int NAMENODE_PORT = 9870;
-    private static final String DATANODE_HOST = "113.45.31.128";
+    private static final String DATANODE_HOST = "localhost";
     private static final int DATANODE_PORT = 9864;
     private static final String USER = "hadoop-namenode";
     private static final int TIMEOUT = 60000; // 60秒

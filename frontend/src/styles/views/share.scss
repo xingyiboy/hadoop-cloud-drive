@@ -1,0 +1,121 @@
+/**
+ * 分享页面样式
+ */
+.share-view {
+  min-height: 100vh;
+  background: #f0f2f5;
+
+  .share-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+
+    &.error-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+
+      .error-message {
+        text-align: center;
+
+        h2 {
+          font-size: 24px;
+          color: #ff4d4f;
+          margin-bottom: 16px;
+        }
+
+        p {
+          color: #666;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .share-header {
+    margin-bottom: 24px;
+    text-align: center;
+
+    h2 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    p {
+      color: #666;
+      font-size: 14px;
+      background: #fff;
+      padding: 8px 16px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+  }
+
+  .share-table {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+
+    .ant-table {
+      .ant-table-thead > tr > th {
+        background: #fafafa;
+        font-weight: normal;
+        color: #666;
+      }
+
+      .file-name-cell {
+        .file-name-content {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .folder-icon,
+          .file-icon {
+            font-size: 16px;
+            color: #666;
+          }
+
+          .folder-icon {
+            color: #fac069;
+          }
+
+          .image-icon {
+            color: #40a9ff;
+          }
+
+          .audio-icon {
+            color: #73d13d;
+          }
+
+          .video-icon {
+            color: #ff7a45;
+          }
+
+          .document-icon {
+            color: #597ef7;
+          }
+
+          .file-icon {
+            color: #8c8c8c;
+          }
+
+          .file-name-text {
+            color: #333;
+          }
+        }
+      }
+
+      .ant-btn-link {
+        padding: 4px 8px;
+        height: auto;
+
+        .anticon {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}

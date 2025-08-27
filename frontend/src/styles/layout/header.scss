@@ -1,0 +1,113 @@
+/**
+ * 头部布局样式
+ */
+@import '../variables.scss';
+
+.header {
+  background-color: $background-light !important;
+  display: flex;
+  justify-content: space-between;
+  
+  .left {
+    background: $background-light !important;
+    display: flex;
+    align-items: center;
+    
+    .logo {
+      color: $primary-color;
+      font-size: 2em;
+      margin-right: 0.2em;
+    }
+    
+    .logo-title {
+      font-weight: bold;
+      font-size: 1.3em;
+      margin-right: 2em;
+      color: $text-color;
+    }
+    
+    .menu {
+      background: $background-light !important;
+      
+      // 修改菜单项的背景色
+      .ant-menu-item {
+        background: $background-light !important;
+        transition: $transition-base;
+        
+        &:hover {
+          background: $background-hover !important;
+        }
+      }
+
+      // 修改菜单组件本身的背景色和边框
+      &.ant-menu {
+        background: $background-light !important;
+        border-bottom: none !important;
+      }
+    }
+  }
+  
+  .right {
+    background: $background-light !important;
+    display: flex;
+    align-items: center;
+    font-size: $font-size-base;
+    color: $text-color;
+  }
+}
+
+.profile-form {
+  .ant-form-item {
+    margin-bottom: $content-padding;
+
+    .ant-form-item-label {
+      padding-bottom: $margin-sm;
+
+      label {
+        color: $text-color;
+        font-size: $font-size-base;
+      }
+    }
+
+    .ant-input {
+      height: 40px;
+      background: #f8f9fc;
+      border: none;
+      border-radius: $border-radius;
+      padding: $margin-sm 12px;
+      font-size: $font-size-base;
+
+      &::placeholder {
+        color: $text-color-disabled;
+      }
+
+      &[disabled] {
+        color: $text-color;
+        background-color: #f8f9fc;
+        cursor: default;
+      }
+    }
+  }
+}
+
+.ant-modal-content {
+  .ant-modal-header {
+    border-bottom: none;
+    padding: $content-padding $content-padding 0;
+
+    .ant-modal-title {
+      font-size: $font-size-xl;
+      font-weight: 500;
+      color: $text-color;
+    }
+  }
+
+  .ant-modal-body {
+    padding: $content-padding;
+  }
+
+  .ant-modal-close {
+    top: $content-padding;
+    right: $content-padding;
+  }
+}

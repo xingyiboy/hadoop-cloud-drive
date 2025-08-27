@@ -1,0 +1,327 @@
+/**
+ * 登录页面样式
+ */
+.main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+.login-page {
+  flex: 1;
+  background-image: url("@/assets/bg.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  contain: paint;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 20px;
+  .header-login {
+    height: 150px;
+    display: flex;
+    justify-content: space-between;
+    .left,
+    .right {
+      padding: 20px;
+      font-size: 16px;
+      color: #fff;
+      display: flex;
+      div {
+        margin-left: 20px;
+      }
+      .clickable-link {
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+      .clickable-placeholder {
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+  }
+  .submit-form {
+    margin-left: auto;
+    margin-right: 15%;
+    margin-top: auto;
+    width: 450px;
+    max-width: calc(100vw - 40px);
+    min-height: 430px;
+    height: auto;
+    background-color: #fff;
+    margin-bottom: 20px;
+    .title {
+      text-align: center;
+      font-weight: 500;
+      font-size: 15px;
+      padding-top: 20px;
+    }
+    .ant-form-item {
+      margin: 20px;
+      
+      // 注册模式下的标签样式
+      .ant-form-item-label {
+        text-align: left;
+        
+        > label {
+          font-weight: 500;
+          color: #262626;
+        }
+      }
+      
+      // 调整带标签的表单项间距
+      &.ant-form-item-has-label {
+        margin-bottom: 16px;
+      }
+    }
+    .bottom {
+      height: 70px;
+      background-color: #f5f5f5;
+      display: grid;
+      padding-top: 5%;
+      grid-template-columns: 1.6fr 1fr 1fr;
+    }
+  }
+}
+.footer {
+  min-height: 120px;
+  background-color: #f5f5f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+  .name {
+    text-align: center;
+  }
+}
+
+/* 响应式布局 */
+
+/* 大屏幕 (1200px+) - 默认布局 */
+@media (min-width: 1200px) {
+  .login-page .submit-form {
+    margin-right: 15%;
+  }
+}
+
+/* 中大屏幕 (992px - 1199px) */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .login-page .submit-form {
+    margin-right: 10%;
+    width: 420px;
+  }
+}
+
+/* 中等屏幕 (768px - 991px) */
+@media (max-width: 991px) and (min-width: 768px) {
+  .login-page {
+    .header-login {
+      .left, .right {
+        font-size: 14px;
+        div {
+          margin-left: 15px;
+        }
+      }
+    }
+    
+    .submit-form {
+      margin-right: 5%;
+      width: 400px;
+      
+      .ant-form-item {
+        margin: 16px;
+      }
+    }
+  }
+  
+  .footer {
+    min-height: 80px;
+    .ant-space {
+      .ant-space-item {
+        margin-right: 60px !important;
+        
+        .ant-avatar {
+          width: 45px !important;
+          height: 45px !important;
+        }
+        
+        .name {
+          font-size: 13px;
+        }
+      }
+    }
+  }
+}
+
+/* 平板和小屏幕 (最大767px) - 隐藏底部图标 */
+@media (max-width: 767px) {
+  .footer {
+    display: none; // 在768px以下隐藏Android、Windows、Mac、iPhone图标
+  }
+}
+
+/* 小屏幕 (576px - 767px) */
+@media (max-width: 767px) and (min-width: 576px) {
+  .login-page {
+    .header-login {
+      height: 80px;
+      .left, .right {
+        padding: 15px;
+        font-size: 13px;
+        div {
+          margin-left: 10px;
+        }
+      }
+      .right {
+        .clickable-placeholder {
+          display: none; // 隐藏不重要的链接
+        }
+      }
+    }
+    
+    .submit-form {
+      margin: 20px auto;
+      width: 90%;
+      max-width: 380px;
+      
+      .ant-form-item {
+        margin: 12px 16px;
+      }
+    }
+  }
+}
+
+/* 超小屏幕 (最大575px) */
+@media (max-width: 575px) {
+  .main {
+    padding: 0;
+  }
+  
+  .login-page {
+    .header-login {
+      display: none; // 完全隐藏头部导航
+    }
+    
+    .submit-form {
+      margin: 10px;
+      margin-top: auto;
+      width: calc(100% - 20px);
+      min-height: auto;
+      
+      .title {
+        font-size: 16px;
+        padding: 15px 0;
+      }
+      
+      .ant-form-item {
+        margin: 8px 12px;
+        
+        .ant-input, .ant-input-password {
+          height: 44px;
+        }
+      }
+      
+      .bottom {
+        height: 60px;
+        padding-top: 3%;
+        
+        a {
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}
+
+/* 极小屏幕 (最大400px) - 只显示登录表单 */
+@media (max-width: 400px) {
+  .login-page {
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    
+    .submit-form {
+      margin: 0;
+      width: 100%;
+      min-height: auto;
+      
+      .ant-form-item {
+        margin: 6px 10px;
+      }
+      
+      .bottom {
+        height: 50px;
+        
+        a {
+          font-size: 11px;
+        }
+      }
+    }
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .login-page .submit-form {
+    .ant-form-item {
+      .ant-input, .ant-input-password {
+        min-height: 44px;
+        font-size: 16px; // 防止iOS缩放
+      }
+      
+      .ant-btn {
+        min-height: 44px;
+        font-size: 16px;
+      }
+    }
+  }
+  
+  .header-login {
+    .clickable-link, .clickable-placeholder {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+/* 横屏手机优化 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .main {
+    min-height: 100vh;
+  }
+  
+  .login-page {
+    .header-login {
+      height: 60px;
+      .left, .right {
+        padding: 10px;
+        font-size: 12px;
+      }
+    }
+    
+    .submit-form {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      
+      .title {
+        padding: 10px 0;
+      }
+      
+      .ant-form-item {
+        margin: 6px 16px;
+      }
+      
+      .bottom {
+        height: 50px;
+      }
+    }
+  }
+  
+  // footer在小屏幕时已被隐藏，这里不需要额外设置
+}
